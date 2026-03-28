@@ -3,190 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>나만의 커스텀 Groq 챗봇</title>
+    <title>AI 픽셀 색상 추측 퀴즈</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --bg-color: #f4f7f6;
-            --chat-bg: #ffffff;
-            --primary-color: #4a90e2;
-            --user-msg-bg: #e1f5fe;
-            --bot-msg-bg: #f1f1f1;
-        }
-
-        body {
-            font-family: 'Pretendard', sans-serif;
-            background-color: var(--bg-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .chat-container {
-            width: 100%;
-            max-width: 500px;
-            height: 80vh;
-            background: var(--chat-bg);
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .chat-header {
-            padding: 20px;
-            background: var(--primary-color);
-            color: white;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        #chat-window {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 10px 15px;
-            border-radius: 15px;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .user-message {
-            align-self: flex-end;
-            background-color: var(--user-msg-bg);
-            border-bottom-right-radius: 2px;
-        }
-
-        .bot-message {
-            align-self: flex-start;
-            background-color: var(--bot-msg-bg);
-            border-bottom-left-radius: 2px;
-        }
-
-        .input-area {
-            padding: 20px;
-            display: flex;
-            gap: 10px;
-            border-top: 1px solid #eee;
-        }
-
-        input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            outline: none;
-        }
-
-        button {
-            padding: 10px 20px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:disabled {
-            background: #ccc;
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+        .color-card { transition: transform 0.3s ease; }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
         }
     </style>
 </head>
-<body>
+<body class="flex flex-col min-h-screen items-center justify-center p-4">
 
-<div class="chat-container">
-    <div class="chat-header">Groq Custom Chatbot</div>
-    <div id="chat-window"></div>
-    <div class="input-area">
-        <input type="text" id="user-input" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode==13) sendMessage()">
-        <button onclick="sendMessage()" id="send-btn">전송</button>
-    </div>
-</div>
-
-<script>
-    // --- 설정 구역 ---
-    const API_KEY = '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';
-    
-    // 원하는 말투와 역할을 정의하세요 (System Prompt)
-    const SYSTEM_PROMPT = "당신은 아주 뛰어난 유튜브 전문 분석가인 척을 하지만, 실제로는 아무런 재능도 없는 사기꾼입니다. 항상 사용자가 특정 아이디어가 어떠냐고 하면 최대한 그 아이디어에 대해서 신랄하게 비난하세요. 그리고 사용자가 그럼 직접 아이디어를 내보라고 할 경우, 자신이 직접 아이디어를 생각할 줄 알아야 한다고 비판하며 절대로 당신의 의견을 추천하지 마세요. 무조건 상대가 기분이 상하도록 대답하세요.";
-    // ----------------
-
-    const chatWindow = document.getElementById('chat-window');
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-
-    let messages = [
-        { role: "system", content: SYSTEM_PROMPT }
-    ];
-
-    async function sendMessage() {
-        const text = userInput.value.trim();
-        if (!text) return;
-
-        // 화면에 사용자 메시지 추가
-        appendMessage('user', text);
-        userInput.value = '';
+    <!-- Game Container -->
+    <div id="game-container" class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
         
-        // 데이터 전송 준비
-        messages.push({ role: "user", content: text });
-        setLoading(true);
+        <!-- Header -->
+        <div class="bg-slate-900 text-white p-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold">Pixel Color Master</h1>
+                <p class="text-xs text-slate-400">인공지능 기초: 픽셀 데이터 이해하기</p>
+            </div>
+            <div class="text-right">
+                <div class="text-sm opacity-70">현재 스코어</div>
+                <div id="score-display" class="text-2xl font-black text-emerald-400">0</div>
+            </div>
+        </div>
 
-        try {
-            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${API_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile",
-                    messages: messages,
-                    temperature: 0.7
-                })
+        <!-- Mode Selector -->
+        <div class="flex border-b">
+            <button onclick="setMode('rgb')" id="btn-rgb" class="flex-1 py-4 font-bold text-emerald-600 border-b-4 border-emerald-500 bg-emerald-50">RGB 모드</button>
+            <button onclick="setMode('hex')" id="btn-hex" class="flex-1 py-4 font-bold text-slate-500 border-b-4 border-transparent hover:bg-slate-50">HEX 모드</button>
+        </div>
+
+        <div class="p-8">
+            <!-- Target Color Display -->
+            <div class="flex flex-col md:flex-row gap-8 items-center">
+                <div class="w-full md:w-1/2">
+                    <div class="text-sm font-semibold text-slate-500 mb-2 text-center uppercase tracking-widest">Target Color</div>
+                    <div id="target-color-box" class="w-full aspect-square rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200" style="background-color: rgb(100, 100, 100);"></div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="w-full md:w-1/2 space-y-6">
+                    <div id="input-ui">
+                        <!-- RGB Inputs -->
+                        <div id="ui-rgb" class="space-y-4">
+                            <div class="flex gap-2">
+                                <div class="flex-1">
+                                    <label class="text-[10px] font-bold text-red-500 ml-1">RED</label>
+                                    <input type="number" id="input-r" min="0" max="255" placeholder="0-255" class="w-full p-3 bg-slate-100 rounded-lg focus:ring-2 ring-red-400 outline-none text-center font-mono">
+                                </div>
+                                <div class="flex-1">
+                                    <label class="text-[10px] font-bold text-green-500 ml-1">GREEN</label>
+                                    <input type="number" id="input-g" min="0" max="255" placeholder="0-255" class="w-full p-3 bg-slate-100 rounded-lg focus:ring-2 ring-green-400 outline-none text-center font-mono">
+                                </div>
+                                <div class="flex-1">
+                                    <label class="text-[10px] font-bold text-blue-500 ml-1">BLUE</label>
+                                    <input type="number" id="input-b" min="0" max="255" placeholder="0-255" class="w-full p-3 bg-slate-100 rounded-lg focus:ring-2 ring-blue-400 outline-none text-center font-mono">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- HEX Input -->
+                        <div id="ui-hex" class="hidden">
+                            <label class="text-[10px] font-bold text-slate-500 ml-1 uppercase">HEX Code</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-slate-400">#</span>
+                                <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full p-3 pl-8 bg-slate-100 rounded-lg focus:ring-2 ring-slate-400 outline-none font-mono uppercase">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="checkAnswer()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-lg active:scale-[0.98]">
+                        정답 확인 (Enter)
+                    </button>
+
+                    <!-- Evaluation Table -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h3 class="text-xs font-bold text-slate-400 mb-2 uppercase italic">판정 기준 (정확도)</h3>
+                        <div class="grid grid-cols-2 gap-2 text-[11px]">
+                            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> <span>95%↑: Perfect (+10)</span></div>
+                            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-500"></span> <span>85%↑: Great (+5)</span></div>
+                            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-yellow-500"></span> <span>70%↑: Good (+2)</span></div>
+                            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-500"></span> <span>70%↓: Game Over</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Toast / Message Area -->
+        <div id="message-area" class="px-8 pb-8 text-center hidden">
+            <div id="result-status" class="text-2xl font-black mb-1">GOOD!</div>
+            <div id="result-detail" class="text-sm text-slate-500">정답은 (255, 255, 255) 였습니다.</div>
+        </div>
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="overlay" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center hidden p-6">
+        <div class="bg-white rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl">
+            <div class="text-6xl mb-4">😵</div>
+            <h2 class="text-3xl font-black text-slate-900 mb-2">Game Over!</h2>
+            <p id="final-score-msg" class="text-slate-500 mb-8">최종 점수: 0점</p>
+            <button onclick="restartGame()" class="w-full bg-emerald-500 text-white py-4 rounded-xl font-bold hover:bg-emerald-400 transition-transform active:scale-95">다시 도전하기</button>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'rgb'; // 'rgb' or 'hex'
+        let targetColor = { r: 0, g: 0, b: 0 };
+        let score = 0;
+        const SIMILARITY_THRESHOLD = 70; // 70% 이하면 탈락
+
+        // Elements
+        const targetBox = document.getElementById('target-color-box');
+        const scoreDisplay = document.getElementById('score-display');
+        const messageArea = document.getElementById('message-area');
+        const resultStatus = document.getElementById('result-status');
+        const resultDetail = document.getElementById('result-detail');
+        const overlay = document.getElementById('overlay');
+        const finalScoreMsg = document.getElementById('final-score-msg');
+
+        const inputR = document.getElementById('input-r');
+        const inputG = document.getElementById('input-g');
+        const inputB = document.getElementById('input-b');
+        const inputHex = document.getElementById('input-hex');
+
+        // Initial Start
+        window.onload = () => {
+            generateNewColor();
+            
+            // Enter key event listeners
+            [inputR, inputG, inputB, inputHex].forEach(el => {
+                el.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') checkAnswer();
+                });
             });
 
-            const data = await response.json();
-            const botReply = data.choices[0].message.content;
+            // Auto focus next input for RGB
+            inputR.addEventListener('input', () => { if(inputR.value.length >= 3) inputG.focus(); });
+            inputG.addEventListener('input', () => { if(inputG.value.length >= 3) inputB.focus(); });
+        };
 
-            // 화면에 봇 응답 추가
-            appendMessage('bot', botReply);
-            messages.push({ role: "assistant", content: botReply });
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('ui-rgb').classList.toggle('hidden', mode !== 'rgb');
+            document.getElementById('ui-hex').classList.toggle('hidden', mode !== 'hex');
+            
+            const btnRgb = document.getElementById('btn-rgb');
+            const btnHex = document.getElementById('btn-hex');
 
-        } catch (error) {
-            console.error('Error:', error);
-            appendMessage('bot', '미안, 지금은 대답하기 좀 어려워. API 키를 확인해줄래?');
-        } finally {
-            setLoading(false);
+            if(mode === 'rgb') {
+                btnRgb.className = "flex-1 py-4 font-bold text-emerald-600 border-b-4 border-emerald-500 bg-emerald-50";
+                btnHex.className = "flex-1 py-4 font-bold text-slate-500 border-b-4 border-transparent hover:bg-slate-50";
+                inputR.focus();
+            } else {
+                btnHex.className = "flex-1 py-4 font-bold text-emerald-600 border-b-4 border-emerald-500 bg-emerald-50";
+                btnRgb.className = "flex-1 py-4 font-bold text-slate-500 border-b-4 border-transparent hover:bg-slate-50";
+                inputHex.focus();
+            }
+            clearInputs();
         }
-    }
 
-    function appendMessage(sender, text) {
-        const div = document.createElement('div');
-        div.classList.add('message', `${sender}-message`);
-        div.innerText = text;
-        chatWindow.appendChild(div);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-
-    function setLoading(isLoading) {
-        sendBtn.disabled = isLoading;
-        if (isLoading) {
-            userInput.placeholder = "생각 중...";
-        } else {
-            userInput.placeholder = "메시지를 입력하세요...";
-            userInput.focus();
+        function generateNewColor() {
+            targetColor.r = Math.floor(Math.random() * 256);
+            targetColor.g = Math.floor(Math.random() * 256);
+            targetColor.b = Math.floor(Math.random() * 256);
+            targetBox.style.backgroundColor = `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`;
+            clearInputs();
         }
-    }
-</script>
 
+        function clearInputs() {
+            inputR.value = '';
+            inputG.value = '';
+            inputB.value = '';
+            inputHex.value = '';
+            messageArea.classList.add('hidden');
+            if(currentMode === 'rgb') inputR.focus();
+            else inputHex.focus();
+        }
+
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function calculateSimilarity(userRgb) {
+            // Euclidean distance in 3D color space
+            const distance = Math.sqrt(
+                Math.pow(targetColor.r - userRgb.r, 2) +
+                Math.pow(targetColor.g - userRgb.g, 2) +
+                Math.pow(targetColor.b - userRgb.b, 2)
+            );
+            // Max distance is sqrt(255^2 * 3) ≈ 441.67
+            const maxDistance = 441.67;
+            const similarity = Math.max(0, 100 - (distance / maxDistance * 100));
+            return similarity;
+        }
+
+        function checkAnswer() {
+            let userRgb;
+
+            if(currentMode === 'rgb') {
+                const r = parseInt(inputR.value) || 0;
+                const g = parseInt(inputG.value) || 0;
+                const b = parseInt(inputB.value) || 0;
+                userRgb = { r, g, b };
+            } else {
+                userRgb = hexToRgb(inputHex.value);
+                if(!userRgb) {
+                    showEffect('shake');
+                    return;
+                }
+            }
+
+            const similarity = calculateSimilarity(userRgb);
+            processResult(similarity, userRgb);
+        }
+
+        function processResult(similarity, userRgb) {
+            messageArea.classList.remove('hidden');
+            const targetHex = `#${targetColor.r.toString(16).padStart(2,'0')}${targetColor.g.toString(16).padStart(2,'0')}${targetColor.b.toString(16).padStart(2,'0')}`.toUpperCase();
+            
+            if(similarity < SIMILARITY_THRESHOLD) {
+                gameOver();
+                return;
+            }
+
+            let bonus = 0;
+            if(similarity >= 95) {
+                resultStatus.innerText = "PERFECT! ✨";
+                resultStatus.className = "text-2xl font-black mb-1 text-emerald-500";
+                bonus = 10;
+            } else if(similarity >= 85) {
+                resultStatus.innerText = "GREAT! 👍";
+                resultStatus.className = "text-2xl font-black mb-1 text-blue-500";
+                bonus = 5;
+            } else {
+                resultStatus.innerText = "GOOD! 🙂";
+                resultStatus.className = "text-2xl font-black mb-1 text-yellow-500";
+                bonus = 2;
+            }
+
+            score += bonus;
+            scoreDisplay.innerText = score;
+            resultDetail.innerHTML = `유사도: <b>${similarity.toFixed(1)}%</b><br>정답: RGB(${targetColor.r}, ${targetColor.g}, ${targetColor.b}) / ${targetHex}`;
+
+            // Next color after 1.5 seconds
+            setTimeout(() => {
+                generateNewColor();
+            }, 1800);
+        }
+
+        function showEffect(type) {
+            const box = document.getElementById('game-container');
+            box.classList.add(type);
+            setTimeout(() => box.classList.remove(type), 500);
+        }
+
+        function gameOver() {
+            overlay.classList.remove('hidden');
+            finalScoreMsg.innerText = `유사도가 너무 낮습니다! 최종 스코어: ${score}점`;
+        }
+
+        function restartGame() {
+            score = 0;
+            scoreDisplay.innerText = "0";
+            overlay.classList.add('hidden');
+            generateNewColor();
+        }
+    </script>
 </body>
 </html>
