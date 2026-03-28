@@ -8,19 +8,18 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
         
-        /* 1. 기본 배경을 아예 고정해서 잘림 현상 방지 */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: #1e225e; /* 기본 배경색 */
+            background: #1e225e;
             font-family: 'Pretendard', sans-serif;
             touch-action: none;
         }
 
-        /* 2. 배경 패턴 레이어를 독립적으로 고정 (하단 밀림 방지 핵심) */
+        /* 배경 레이어 - 복구 완료 */
         #bg-layer {
             position: fixed;
             top: 0;
@@ -31,6 +30,7 @@
             z-index: -1;
         }
 
+        /* 이전의 그 화려한 배경 무늬 그대로 복구 */
         #bg-layer::before {
             content: "";
             position: absolute;
@@ -73,7 +73,7 @@
             align-items: center;
             justify-content: center;
             padding: 10px 0;
-            gap: 15px;
+            gap: 20px;
             overflow: hidden;
         }
 
@@ -108,22 +108,20 @@
             width: 88%;
             max-width: 400px;
             flex-shrink: 0;
-            margin-bottom: 20px;
-            padding-bottom: constant(safe-area-inset-bottom);
-            padding-bottom: env(safe-area-inset-bottom);
+            margin-bottom: 25px;
         }
 
-        /* 키보드 대응 강화 */
+        /* 키보드 대응 - 카드 크기 최적화 */
         .keyboard-active #top-toolbar { height: 0; opacity: 0; pointer-events: none; }
-        .keyboard-active .main-stage { justify-content: flex-start; padding-top: 10px; }
-        .keyboard-active .main-card { transform: scale(0.8); max-height: 30vh; margin-top: -20px; }
-        .keyboard-active .input-area { transform: translateY(-10px); }
+        .keyboard-active .main-stage { justify-content: flex-start; padding-top: 20px; }
+        .keyboard-active .main-card { transform: scale(0.9); max-height: 38vh; }
 
         input {
             -webkit-appearance: none;
             appearance: none;
             border: none;
             outline: none !important;
+            transition: all 0.2s;
         }
 
         .btn-gradient {
@@ -140,11 +138,11 @@
 </head>
 <body>
     
-    <!-- 배경을 담당하는 고정 레이어 -->
+    <!-- 배경 레이어 (무늬 복구) -->
     <div id="bg-layer"></div>
 
     <div id="viewport-root">
-        <!-- 상단 바 -->
+        <!-- 상단 툴바 -->
         <div id="top-toolbar">
             <div class="flex items-center gap-2 text-white">
                 <div class="w-8 h-8 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
@@ -168,6 +166,7 @@
 
                 <div id="target-color-box" class="color-box"></div>
 
+                <!-- 결과 레이어 -->
                 <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[2.5rem] flex flex-col items-center justify-center p-6 z-30 shadow-2xl">
                     <div id="status-badge" class="text-3xl font-black italic mb-1 tracking-tighter">GREAT!</div>
                     <div id="similarity-text" class="text-slate-900 font-extrabold text-xl mb-3">유사도: 98.5%</div>
@@ -176,36 +175,30 @@
                     </div>
                     <div class="text-center">
                         <p id="correct-answer-info" class="text-[11px] font-mono font-black text-slate-500 mb-1"></p>
-                        <p class="text-[9px] font-bold text-indigo-500 animate-pulse uppercase tracking-widest">TAP ARROW TO NEXT</p>
+                        <p class="text-[10px] font-bold text-indigo-500 animate-pulse uppercase tracking-widest">PRESS ENTER TO NEXT</p>
                     </div>
                 </div>
 
                 <div class="w-full text-center">
-                    <p class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">RGB/HEX Guessing Game</p>
+                    <p class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Type values & Press Enter</p>
                 </div>
             </div>
 
-            <!-- 하단 입력창 -->
+            <!-- 하단 입력창 (거추장스러운 테두리 제거) -->
             <div class="input-area">
-                <div class="flex gap-3 items-center">
-                    <div class="flex-1 flex gap-2 bg-white/10 backdrop-blur-3xl p-2.5 rounded-[2rem] border border-white/30 shadow-2xl">
-                        <div id="ui-rgb" class="flex w-full gap-2">
-                            <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full py-4 bg-white rounded-xl text-center font-black text-xl text-slate-800 shadow-inner" inputmode="numeric">
-                            <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full py-4 bg-white rounded-xl text-center font-black text-xl text-slate-800 shadow-inner" inputmode="numeric">
-                            <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full py-4 bg-white rounded-xl text-center font-black text-xl text-slate-800 shadow-inner" inputmode="numeric">
-                        </div>
-                        <div id="ui-hex" class="hidden w-full relative">
-                            <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 font-black text-xl">#</span>
-                            <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full py-4 pl-12 bg-white rounded-xl font-mono text-xl uppercase font-black text-slate-800 shadow-inner">
-                        </div>
-                    </div>
-
-                    <button id="action-btn" onclick="handleMainAction()" class="w-20 h-20 shrink-0 btn-gradient text-white rounded-[1.8rem] shadow-xl flex items-center justify-center transition-all active:scale-95 border-b-8 border-black/20">
-                        <svg id="btn-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    </button>
+                <div id="ui-rgb" class="flex w-full gap-3">
+                    <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 shadow-2xl focus:ring-4 focus:ring-white/30" inputmode="numeric">
+                    <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 shadow-2xl focus:ring-4 focus:ring-white/30" inputmode="numeric">
+                    <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 shadow-2xl focus:ring-4 focus:ring-white/30" inputmode="numeric">
+                </div>
+                
+                <div id="ui-hex" class="hidden w-full relative">
+                    <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-black text-2xl">#</span>
+                    <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full py-5 pl-12 bg-white text-slate-800 rounded-[1.5rem] font-mono text-2xl uppercase font-black shadow-2xl focus:ring-4 focus:ring-white/30">
                 </div>
 
-                <div class="flex justify-center mt-4 gap-8">
+                <!-- 모드 전환 -->
+                <div class="flex justify-center mt-6 gap-10">
                     <button onclick="setMode('rgb')" id="mode-btn-rgb" class="text-[12px] font-black tracking-widest text-white uppercase border-b-4 border-white pb-0.5">RGB</button>
                     <button onclick="setMode('hex')" id="mode-btn-hex" class="text-[12px] font-black tracking-widest text-white/40 uppercase pb-0.5">HEX</button>
                 </div>
@@ -213,11 +206,11 @@
         </div>
     </div>
 
-    <!-- 게임 오버 -->
+    <!-- 게임 오버 오버레이 -->
     <div id="overlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[1000] flex items-center justify-center hidden p-6">
         <div class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl">
             <h2 class="text-3xl font-black text-slate-900 mb-1 italic">GAME OVER</h2>
-            <p id="final-score-msg" class="text-indigo-600 font-black mb-6 text-lg underline underline-offset-4 decoration-2">최종 점수: 0점</p>
+            <p id="final-score-msg" class="text-indigo-600 font-black mb-6 text-lg">최종 점수: 0점</p>
             <div id="gameover-analysis" class="space-y-2 mb-6 text-left"></div>
             <button onclick="restartGame()" class="w-full btn-gradient text-white py-5 rounded-[2rem] font-black text-xl shadow-xl active:translate-y-1 border-b-4 border-black/20">RESTART</button>
         </div>
@@ -233,7 +226,6 @@
         const viewportRoot = document.getElementById('viewport-root');
         const targetBox = document.getElementById('target-color-box');
         const scoreDisplay = document.getElementById('score-display');
-        const btnIcon = document.getElementById('btn-icon');
         const resultPanel = document.getElementById('result-panel');
         const statusBadge = document.getElementById('status-badge');
         const diffAnalysis = document.getElementById('diff-analysis');
@@ -247,24 +239,35 @@
         const inputB = document.getElementById('input-b');
         const inputHex = document.getElementById('input-hex');
 
-        // 레이아웃 동기화 (배경 잘림 방지용 고정 높이 처리)
+        // 뷰포트 높이 동기화 (배경 잘림 방지)
         const syncLayout = () => {
             const vv = window.visualViewport;
             if (!vv) return;
             viewportRoot.style.height = `${vv.height}px`;
             viewportRoot.style.top = `${vv.offsetTop}px`;
-            
-            if (vv.height < window.innerHeight * 0.8) {
-                document.body.classList.add('keyboard-active');
-            } else {
-                document.body.classList.remove('keyboard-active');
-            }
+            if (vv.height < window.innerHeight * 0.8) document.body.classList.add('keyboard-active');
+            else document.body.classList.remove('keyboard-active');
         };
 
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', syncLayout);
             window.visualViewport.addEventListener('scroll', syncLayout);
         }
+
+        // 엔터키 리스너 (제대로 넘어가게 수정)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (overlay.classList.contains('hidden')) {
+                    if (isResultState) {
+                        generateNewColor();
+                    } else {
+                        checkAnswer();
+                    }
+                } else {
+                    restartGame();
+                }
+            }
+        });
 
         window.addEventListener('load', () => {
             generateNewColor();
@@ -277,9 +280,9 @@
             currentMode = mode;
             document.getElementById('ui-rgb').classList.toggle('hidden', mode !== 'rgb');
             document.getElementById('ui-hex').classList.toggle('hidden', mode !== 'hex');
-            
             document.getElementById('mode-btn-rgb').className = mode === 'rgb' ? "text-[12px] font-black tracking-widest text-white uppercase border-b-4 border-white pb-0.5" : "text-[12px] font-black tracking-widest text-white/40 uppercase pb-0.5";
             document.getElementById('mode-btn-hex').className = mode === 'hex' ? "text-[12px] font-black tracking-widest text-white uppercase border-b-4 border-white pb-0.5" : "text-[12px] font-black tracking-widest text-white/40 uppercase pb-0.5";
+            if (mode === 'rgb') inputR.focus(); else inputHex.focus();
         }
 
         function generateNewColor() {
@@ -291,13 +294,8 @@
             };
             targetBox.style.backgroundColor = `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`;
             resultPanel.classList.add('hidden');
-            btnIcon.innerHTML = `<polyline points="9 18 15 12 9 6"></polyline>`;
             [inputR, inputG, inputB, inputHex].forEach(el => { el.disabled = false; el.value = ''; });
-        }
-
-        function handleMainAction() {
-            if (isResultState) generateNewColor();
-            else checkAnswer();
+            if (currentMode === 'rgb') inputR.focus(); else inputHex.focus();
         }
 
         function checkAnswer() {
@@ -318,7 +316,7 @@
                 } : null;
             }
 
-            if(!userRgb) {
+            if(!userRgb && currentMode === 'hex') {
                 document.getElementById('game-container').classList.add('shake');
                 setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 500);
                 return;
@@ -342,7 +340,6 @@
                 { name: 'G', target: targetColor.g, user: userRgb.g, color: 'bg-green-500' },
                 { name: 'B', target: targetColor.b, user: userRgb.b, color: 'bg-blue-500' }
             ];
-
             return channels.map(c => {
                 const diff = Math.abs(c.user - c.target);
                 const barWidth = Math.max(0, 100 - (diff / 255 * 100));
@@ -363,26 +360,13 @@
             [inputR, inputG, inputB, inputHex].forEach(el => el.disabled = true);
             resultPanel.classList.remove('hidden');
             similarityText.innerText = `유사도: ${similarity.toFixed(1)}%`;
-            
-            if(similarity >= 96) {
-                statusBadge.innerText = "PERFECT!";
-                statusBadge.className = "text-3xl font-black italic mb-1 text-emerald-500";
-                score += 15;
-            } else if(similarity >= 88) {
-                statusBadge.innerText = "GREAT!";
-                statusBadge.className = "text-3xl font-black italic mb-1 text-blue-500";
-                score += 7;
-            } else {
-                statusBadge.innerText = "GOOD!";
-                statusBadge.className = "text-3xl font-black italic mb-1 text-amber-500";
-                score += 3;
-            }
+            if(similarity >= 96) { statusBadge.innerText = "PERFECT!"; statusBadge.className = "text-3xl font-black italic mb-1 text-emerald-500"; score += 15;
+            } else if(similarity >= 88) { statusBadge.innerText = "GREAT!"; statusBadge.className = "text-3xl font-black italic mb-1 text-blue-500"; score += 7;
+            } else { statusBadge.innerText = "GOOD!"; statusBadge.className = "text-3xl font-black italic mb-1 text-amber-500"; score += 3; }
             scoreDisplay.innerText = score;
             diffAnalysis.innerHTML = analysisHTML;
-
             const targetHex = `#${targetColor.r.toString(16).padStart(2,'0')}${targetColor.g.toString(16).padStart(2,'0')}${targetColor.b.toString(16).padStart(2,'0')}`.toUpperCase();
             correctAnswerInfo.innerText = `ANSWER: ${targetHex}`;
-            btnIcon.innerHTML = `<polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline>`;
             document.activeElement.blur();
         }
 
@@ -394,7 +378,7 @@
                 ${analysisHTML}
                 <div class="mt-4 pt-4 border-t border-slate-100 text-center">
                     <p class="text-2xl font-black text-red-500">${similarity.toFixed(1)}%</p>
-                    <p class="text-[9px] font-bold text-slate-300">75% 이상이어야 합니다.</p>
+                    <p class="text-[10px] font-bold text-slate-400">75% 이상이어야 통과입니다.</p>
                 </div>
             `;
             document.activeElement.blur();
