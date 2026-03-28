@@ -2,13 +2,49 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 픽셀 색상 추측 퀴즈</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pixel Master - Machugi Style</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
-        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
-        .color-card { transition: transform 0.3s ease; }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Pretendard', sans-serif;
+        }
+
+        /* 마추기 아이오 특유의 배경 디자인 */
+        .machugi-bg {
+            background-color: #2e3192;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+            position: relative;
+        }
+
+        /* 배경의 둥근 곡선 패턴 구현 */
+        .bg-pattern {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            z-index: 0;
+        }
+
+        .pattern-1 { width: 400px; height: 400px; top: -100px; left: -100px; }
+        .pattern-2 { width: 500px; height: 500px; bottom: -150px; right: -150px; }
+
+        .main-card {
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        /* 흔들림 효과 */
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
             10%, 90% { transform: translate3d(-1px, 0, 0); }
@@ -16,263 +52,275 @@
             30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
             40%, 60% { transform: translate3d(4px, 0, 0); }
         }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
     </style>
 </head>
-<body class="flex flex-col min-h-screen items-center justify-center p-4">
+<body class="machugi-bg flex flex-col items-center justify-center p-0">
+    
+    <div class="bg-pattern pattern-1"></div>
+    <div class="bg-pattern pattern-2"></div>
 
-    <!-- Game Container -->
-    <div id="game-container" class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
-        
-        <!-- Header -->
-        <div class="bg-slate-900 text-white p-6 flex justify-between items-center">
-            <div>
-                <h1 class="text-xl font-bold">Pixel Color Master</h1>
-                <p class="text-xs text-slate-400">인공지능 기초: 픽셀 데이터 이해하기</p>
+    <!-- 상단 툴바 (Machugi 스타일) -->
+    <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-20">
+        <div class="flex items-center gap-2 text-white">
+            <div class="bg-white p-1 rounded">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#2e3192"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4z"></path></svg>
             </div>
-            <div class="text-right">
-                <div class="text-sm opacity-70">현재 스코어</div>
-                <div id="score-display" class="text-2xl font-black text-emerald-400">0</div>
+            <span class="font-black text-lg tracking-tighter">MACHUGI.IO</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-white/10 px-4 py-1.5 rounded-lg border border-white/20 text-white font-bold">
+                SCORE: <span id="score-display">0</span>
             </div>
-        </div>
-
-        <!-- Mode Selector -->
-        <div class="flex border-b">
-            <button onclick="setMode('rgb')" id="btn-rgb" class="flex-1 py-4 font-bold text-emerald-600 border-b-4 border-emerald-500 bg-emerald-50">RGB 모드</button>
-            <button onclick="setMode('hex')" id="btn-hex" class="flex-1 py-4 font-bold text-slate-500 border-b-4 border-transparent hover:bg-slate-50">HEX 모드</button>
-        </div>
-
-        <div class="p-8">
-            <!-- Target Color Display -->
-            <div class="flex flex-col md:flex-row gap-8 items-center">
-                <div class="w-full md:w-1/2">
-                    <div class="text-sm font-semibold text-slate-500 mb-2 text-center uppercase tracking-widest">Target Color</div>
-                    <div id="target-color-box" class="w-full aspect-square rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200" style="background-color: rgb(100, 100, 100);"></div>
-                </div>
-
-                <!-- Input Area -->
-                <div class="w-full md:w-1/2 space-y-6">
-                    <div id="input-ui">
-                        <!-- RGB Inputs -->
-                        <div id="ui-rgb" class="space-y-4">
-                            <div class="flex gap-2">
-                                <div class="flex-1">
-                                    <label class="text-[10px] font-bold text-red-500 ml-1">RED</label>
-                                    <input type="number" id="input-r" min="0" max="255" placeholder="0-255" class="w-full p-3 bg-slate-100 rounded-lg focus:ring-2 ring-red-400 outline-none text-center font-mono">
-                                </div>
-                                <div class="flex-1">
-                                    <label class="text-[10px] font-bold text-green-500 ml-1">GREEN</label>
-                                    <input type="number" id="input-g" min="0" max="255" placeholder="0-255" class="w-full p-3 bg-slate-100 rounded-lg focus:ring-2 ring-green-400 outline-none text-center font-mono">
-                                </div>
-                                <div class="flex-1">
-                                    <label class="text-[10px] font-bold text-blue-500 ml-1">BLUE</label>
-                                    <input type="number" id="input-b" min="0" max="255" placeholder="0-255" class="w-full p-3 bg-slate-100 rounded-lg focus:ring-2 ring-blue-400 outline-none text-center font-mono">
-                                </div>
-                            </div>
-                        </div>
-                        <!-- HEX Input -->
-                        <div id="ui-hex" class="hidden">
-                            <label class="text-[10px] font-bold text-slate-500 ml-1 uppercase">HEX Code</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-mono text-slate-400">#</span>
-                                <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full p-3 pl-8 bg-slate-100 rounded-lg focus:ring-2 ring-slate-400 outline-none font-mono uppercase">
-                            </div>
-                        </div>
-                    </div>
-
-                    <button onclick="checkAnswer()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-colors shadow-lg active:scale-[0.98]">
-                        정답 확인 (Enter)
-                    </button>
-
-                    <!-- Evaluation Table -->
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <h3 class="text-xs font-bold text-slate-400 mb-2 uppercase italic">판정 기준 (정확도)</h3>
-                        <div class="grid grid-cols-2 gap-2 text-[11px]">
-                            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> <span>95%↑: Perfect (+10)</span></div>
-                            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-blue-500"></span> <span>85%↑: Great (+5)</span></div>
-                            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-yellow-500"></span> <span>70%↑: Good (+2)</span></div>
-                            <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-500"></span> <span>70%↓: Game Over</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Result Toast / Message Area -->
-        <div id="message-area" class="px-8 pb-8 text-center hidden">
-            <div id="result-status" class="text-2xl font-black mb-1">GOOD!</div>
-            <div id="result-detail" class="text-sm text-slate-500">정답은 (255, 255, 255) 였습니다.</div>
+            <button onclick="location.reload()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-1.5 rounded-lg text-sm font-bold transition-all">새로고침</button>
         </div>
     </div>
 
-    <!-- Game Over Overlay -->
-    <div id="overlay" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center hidden p-6">
+    <!-- 중앙 문제 영역 (Machugi 스타일 화이트 박스) -->
+    <div id="game-container" class="relative w-[90%] max-w-lg aspect-square main-card rounded-xl flex flex-col items-center justify-center p-8 transition-all duration-500">
+        
+        <!-- 문제 설명/상태 -->
+        <div id="top-message" class="absolute top-8 left-0 w-full text-center px-6">
+            <p id="mode-text" class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Guess the Color</p>
+            <h2 id="question-title" class="text-2xl font-black text-slate-800 break-keep">이 픽셀의 색상 값은 무엇일까요?</h2>
+        </div>
+
+        <!-- 컬러 박스 (중앙) -->
+        <div id="target-color-box" class="w-40 h-40 md:w-56 md:h-56 rounded-2xl shadow-inner border-4 border-slate-50 transition-all duration-500"></div>
+
+        <!-- 결과 분석 패널 (정답 확인 시 노출) -->
+        <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-xl flex flex-col items-center justify-center p-8 z-30">
+            <div id="status-badge" class="mb-4 text-4xl font-black italic">PERFECT!</div>
+            <div id="similarity-text" class="text-slate-400 text-sm font-bold mb-6">유사도: 98.5%</div>
+            
+            <div id="diff-analysis" class="w-full space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <!-- 분석 내용 주입 -->
+            </div>
+            
+            <p id="correct-answer-info" class="text-sm font-mono font-bold text-slate-500"></p>
+        </div>
+    </div>
+
+    <!-- 하단 입력 영역 ( Machugi 스타일 ) -->
+    <div class="mt-8 w-full max-w-lg px-4 z-10">
+        <div class="flex gap-3 items-center">
+            
+            <!-- 입력 필드 그룹 -->
+            <div id="input-group" class="flex-1 flex gap-2 bg-white p-2 rounded-xl shadow-lg">
+                <!-- RGB 입력 -->
+                <div id="ui-rgb" class="flex w-full gap-1">
+                    <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors">
+                    <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-green-50 transition-colors">
+                    <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors">
+                </div>
+                <!-- HEX 입력 -->
+                <div id="ui-hex" class="hidden w-full relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-black text-xl">#</span>
+                    <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full p-4 pl-10 bg-slate-50 rounded-lg outline-none font-mono text-xl uppercase font-black text-slate-700">
+                </div>
+            </div>
+
+            <!-- 실행 버튼 -->
+            <button id="action-btn" onclick="handleMainAction()" class="w-16 h-16 shrink-0 bg-[#8c31ff] hover:bg-[#7a22ef] text-white rounded-xl shadow-lg flex items-center justify-center transition-all active:scale-90">
+                <svg id="btn-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
+
+        <!-- 모드 전환 버튼 -->
+        <div class="flex justify-center mt-4 gap-4">
+            <button onclick="setMode('rgb')" id="mode-btn-rgb" class="text-[10px] font-black tracking-widest text-white/40 hover:text-white uppercase transition-colors">RGB Mode</button>
+            <button onclick="setMode('hex')" id="mode-btn-hex" class="text-[10px] font-black tracking-widest text-white/40 hover:text-white uppercase transition-colors">Hex Mode</button>
+        </div>
+    </div>
+
+    <!-- 게임 오버 오버레이 -->
+    <div id="overlay" class="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-50 flex items-center justify-center hidden p-6">
         <div class="bg-white rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl">
-            <div class="text-6xl mb-4">😵</div>
-            <h2 class="text-3xl font-black text-slate-900 mb-2">Game Over!</h2>
-            <p id="final-score-msg" class="text-slate-500 mb-8">최종 점수: 0점</p>
-            <button onclick="restartGame()" class="w-full bg-emerald-500 text-white py-4 rounded-xl font-bold hover:bg-emerald-400 transition-transform active:scale-95">다시 도전하기</button>
+            <div class="text-7xl mb-6">😵</div>
+            <h2 class="text-3xl font-black text-slate-900 mb-2 italic">GAME OVER</h2>
+            <p id="final-score-msg" class="text-slate-400 font-bold mb-8">Score: 0</p>
+            <button onclick="restartGame()" class="w-full bg-[#8c31ff] text-white py-5 rounded-xl font-black text-xl hover:bg-[#7a22ef] transition-transform active:scale-95 shadow-xl shadow-purple-500/20">RETRY</button>
         </div>
     </div>
 
     <script>
-        let currentMode = 'rgb'; // 'rgb' or 'hex'
+        let currentMode = 'rgb';
         let targetColor = { r: 0, g: 0, b: 0 };
         let score = 0;
-        const SIMILARITY_THRESHOLD = 70; // 70% 이하면 탈락
+        let isResultState = false;
+        const SIMILARITY_THRESHOLD = 70;
 
-        // Elements
         const targetBox = document.getElementById('target-color-box');
         const scoreDisplay = document.getElementById('score-display');
-        const messageArea = document.getElementById('message-area');
-        const resultStatus = document.getElementById('result-status');
-        const resultDetail = document.getElementById('result-detail');
+        const actionBtn = document.getElementById('action-btn');
+        const btnIcon = document.getElementById('btn-icon');
+        const resultPanel = document.getElementById('result-panel');
+        const statusBadge = document.getElementById('status-badge');
+        const diffAnalysis = document.getElementById('diff-analysis');
+        const correctAnswerInfo = document.getElementById('correct-answer-info');
         const overlay = document.getElementById('overlay');
-        const finalScoreMsg = document.getElementById('final-score-msg');
+        const similarityText = document.getElementById('similarity-text');
 
         const inputR = document.getElementById('input-r');
         const inputG = document.getElementById('input-g');
         const inputB = document.getElementById('input-b');
         const inputHex = document.getElementById('input-hex');
 
-        // Initial Start
         window.onload = () => {
             generateNewColor();
+            setMode('rgb');
             
-            // Enter key event listeners
-            [inputR, inputG, inputB, inputHex].forEach(el => {
-                el.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') checkAnswer();
-                });
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleMainAction();
             });
 
-            // Auto focus next input for RGB
-            inputR.addEventListener('input', () => { if(inputR.value.length >= 3) inputG.focus(); });
-            inputG.addEventListener('input', () => { if(inputG.value.length >= 3) inputB.focus(); });
+            // 포커스 자동 이동
+            inputR.addEventListener('input', (e) => { if(e.target.value.length >= 3) inputG.focus(); });
+            inputG.addEventListener('input', (e) => { if(e.target.value.length >= 3) inputB.focus(); });
+            inputB.addEventListener('input', (e) => { if(e.target.value.length >= 3) actionBtn.focus(); });
         };
 
         function setMode(mode) {
+            if(isResultState) return;
             currentMode = mode;
             document.getElementById('ui-rgb').classList.toggle('hidden', mode !== 'rgb');
             document.getElementById('ui-hex').classList.toggle('hidden', mode !== 'hex');
             
-            const btnRgb = document.getElementById('btn-rgb');
-            const btnHex = document.getElementById('btn-hex');
+            const btnRgb = document.getElementById('mode-btn-rgb');
+            const btnHex = document.getElementById('mode-btn-hex');
+            
+            btnRgb.classList.toggle('text-white', mode === 'rgb');
+            btnRgb.classList.toggle('text-white/40', mode !== 'rgb');
+            btnHex.classList.toggle('text-white', mode === 'hex');
+            btnHex.classList.toggle('text-white/40', mode !== 'hex');
 
-            if(mode === 'rgb') {
-                btnRgb.className = "flex-1 py-4 font-bold text-emerald-600 border-b-4 border-emerald-500 bg-emerald-50";
-                btnHex.className = "flex-1 py-4 font-bold text-slate-500 border-b-4 border-transparent hover:bg-slate-50";
-                inputR.focus();
-            } else {
-                btnHex.className = "flex-1 py-4 font-bold text-emerald-600 border-b-4 border-emerald-500 bg-emerald-50";
-                btnRgb.className = "flex-1 py-4 font-bold text-slate-500 border-b-4 border-transparent hover:bg-slate-50";
-                inputHex.focus();
-            }
-            clearInputs();
+            if(mode === 'rgb') inputR.focus();
+            else inputHex.focus();
         }
 
         function generateNewColor() {
+            isResultState = false;
             targetColor.r = Math.floor(Math.random() * 256);
             targetColor.g = Math.floor(Math.random() * 256);
             targetColor.b = Math.floor(Math.random() * 256);
             targetBox.style.backgroundColor = `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`;
-            clearInputs();
-        }
-
-        function clearInputs() {
-            inputR.value = '';
-            inputG.value = '';
-            inputB.value = '';
-            inputHex.value = '';
-            messageArea.classList.add('hidden');
+            
+            resultPanel.classList.add('hidden');
+            btnIcon.innerHTML = `<polyline points="9 18 15 12 9 6"></polyline>`;
+            
+            inputR.disabled = false; inputG.disabled = false; inputB.disabled = false; inputHex.disabled = false;
+            inputR.value = ''; inputG.value = ''; inputB.value = ''; inputHex.value = '';
+            
             if(currentMode === 'rgb') inputR.focus();
             else inputHex.focus();
         }
 
-        function hexToRgb(hex) {
-            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? {
-                r: parseInt(result[1], 16),
-                g: parseInt(result[2], 16),
-                b: parseInt(result[3], 16)
-            } : null;
+        function handleMainAction() {
+            if (isResultState) {
+                generateNewColor();
+            } else {
+                checkAnswer();
+            }
         }
 
-        function calculateSimilarity(userRgb) {
-            // Euclidean distance in 3D color space
+        function checkAnswer() {
+            let userRgb;
+            if(currentMode === 'rgb') {
+                userRgb = {
+                    r: parseInt(inputR.value) || 0,
+                    g: parseInt(inputG.value) || 0,
+                    b: parseInt(inputB.value) || 0
+                };
+            } else {
+                const hex = inputHex.value;
+                var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                userRgb = result ? {
+                    r: parseInt(result[1], 16),
+                    g: parseInt(result[2], 16),
+                    b: parseInt(result[3], 16)
+                } : null;
+
+                if(!userRgb) {
+                    const container = document.getElementById('game-container');
+                    container.classList.add('shake');
+                    setTimeout(() => container.classList.remove('shake'), 500);
+                    return;
+                }
+            }
+
             const distance = Math.sqrt(
                 Math.pow(targetColor.r - userRgb.r, 2) +
                 Math.pow(targetColor.g - userRgb.g, 2) +
                 Math.pow(targetColor.b - userRgb.b, 2)
             );
-            // Max distance is sqrt(255^2 * 3) ≈ 441.67
-            const maxDistance = 441.67;
-            const similarity = Math.max(0, 100 - (distance / maxDistance * 100));
-            return similarity;
-        }
+            const similarity = Math.max(0, 100 - (distance / 441.67 * 100));
 
-        function checkAnswer() {
-            let userRgb;
-
-            if(currentMode === 'rgb') {
-                const r = parseInt(inputR.value) || 0;
-                const g = parseInt(inputG.value) || 0;
-                const b = parseInt(inputB.value) || 0;
-                userRgb = { r, g, b };
-            } else {
-                userRgb = hexToRgb(inputHex.value);
-                if(!userRgb) {
-                    showEffect('shake');
-                    return;
-                }
-            }
-
-            const similarity = calculateSimilarity(userRgb);
-            processResult(similarity, userRgb);
-        }
-
-        function processResult(similarity, userRgb) {
-            messageArea.classList.remove('hidden');
-            const targetHex = `#${targetColor.r.toString(16).padStart(2,'0')}${targetColor.g.toString(16).padStart(2,'0')}${targetColor.b.toString(16).padStart(2,'0')}`.toUpperCase();
-            
             if(similarity < SIMILARITY_THRESHOLD) {
                 gameOver();
-                return;
-            }
-
-            let bonus = 0;
-            if(similarity >= 95) {
-                resultStatus.innerText = "PERFECT! ✨";
-                resultStatus.className = "text-2xl font-black mb-1 text-emerald-500";
-                bonus = 10;
-            } else if(similarity >= 85) {
-                resultStatus.innerText = "GREAT! 👍";
-                resultStatus.className = "text-2xl font-black mb-1 text-blue-500";
-                bonus = 5;
             } else {
-                resultStatus.innerText = "GOOD! 🙂";
-                resultStatus.className = "text-2xl font-black mb-1 text-yellow-500";
-                bonus = 2;
+                showResult(similarity, userRgb);
             }
-
-            score += bonus;
-            scoreDisplay.innerText = score;
-            resultDetail.innerHTML = `유사도: <b>${similarity.toFixed(1)}%</b><br>정답: RGB(${targetColor.r}, ${targetColor.g}, ${targetColor.b}) / ${targetHex}`;
-
-            // Next color after 1.5 seconds
-            setTimeout(() => {
-                generateNewColor();
-            }, 1800);
         }
 
-        function showEffect(type) {
-            const box = document.getElementById('game-container');
-            box.classList.add(type);
-            setTimeout(() => box.classList.remove(type), 500);
+        function showResult(similarity, userRgb) {
+            isResultState = true;
+            inputR.disabled = true; inputG.disabled = true; inputB.disabled = true; inputHex.disabled = true;
+
+            resultPanel.classList.remove('hidden');
+            similarityText.innerText = `유사도: ${similarity.toFixed(1)}%`;
+            
+            if(similarity >= 95) {
+                statusBadge.innerText = "PERFECT!";
+                statusBadge.className = "mb-4 text-4xl font-black italic text-emerald-500";
+                score += 10;
+            } else if(similarity >= 85) {
+                statusBadge.innerText = "GREAT!";
+                statusBadge.className = "mb-4 text-4xl font-black italic text-blue-500";
+                score += 5;
+            } else {
+                statusBadge.innerText = "GOOD!";
+                statusBadge.className = "mb-4 text-4xl font-black italic text-amber-500";
+                score += 2;
+            }
+            scoreDisplay.innerText = score;
+
+            // 상세 오차 분석
+            const channels = [
+                { name: 'R', target: targetColor.r, user: userRgb.r, color: 'text-red-500' },
+                { name: 'G', target: targetColor.g, user: userRgb.g, color: 'text-green-500' },
+                { name: 'B', target: targetColor.b, user: userRgb.b, color: 'text-blue-500' }
+            ];
+
+            diffAnalysis.innerHTML = channels.map(c => {
+                const diff = c.user - c.target;
+                const sign = diff > 0 ? '+' : '';
+                const diffText = diff === 0 ? 'MATCH' : `${sign}${diff}`;
+                return `
+                    <div class="flex items-center justify-between font-mono text-sm">
+                        <span class="font-black ${c.color}">${c.name}</span>
+                        <div class="flex gap-4">
+                            <span class="text-slate-400">정답: ${c.target}</span>
+                            <span class="font-bold text-slate-800">${diffText}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const targetHex = `#${targetColor.r.toString(16).padStart(2,'0')}${targetColor.g.toString(16).padStart(2,'0')}${targetColor.b.toString(16).padStart(2,'0')}`.toUpperCase();
+            correctAnswerInfo.innerText = `TARGET HEX: ${targetHex}`;
+
+            btnIcon.innerHTML = `<polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline>`;
+            actionBtn.focus();
         }
 
         function gameOver() {
             overlay.classList.remove('hidden');
-            finalScoreMsg.innerText = `유사도가 너무 낮습니다! 최종 스코어: ${score}점`;
+            document.getElementById('final-score-msg').innerText = `Your Score: ${score}`;
         }
 
         function restartGame() {
