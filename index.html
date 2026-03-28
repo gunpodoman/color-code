@@ -8,33 +8,30 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
         
+        /* 1. 기본 배경을 아예 고정해서 잘림 현상 방지 */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            position: fixed;
-            background: #1a1c4b;
+            background: #1e225e; /* 기본 배경색 */
             font-family: 'Pretendard', sans-serif;
             touch-action: none;
         }
 
-        /* 메인 배경 그라데이션 및 원형 얼룩무늬 */
-        #viewport-root {
+        /* 2. 배경 패턴 레이어를 독립적으로 고정 (하단 밀림 방지 핵심) */
+        #bg-layer {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            display: flex;
-            flex-direction: column;
             background: linear-gradient(135deg, #1e225e 0%, #2e3192 100%);
-            overflow: hidden;
+            z-index: -1;
         }
 
-        /* 이미지 스타일의 큰 원형 패턴 레이어 */
-        #viewport-root::before {
+        #bg-layer::before {
             content: "";
             position: absolute;
             inset: 0;
@@ -48,43 +45,51 @@
             pointer-events: none;
         }
 
+        #viewport-root {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 10;
+        }
+
         #top-toolbar {
-            height: 60px; /* 높이 소폭 축소로 여유 확보 */
+            height: 60px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0 24px;
-            z-index: 100;
             flex-shrink: 0;
         }
 
         .main-stage {
             flex: 1;
-            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center; /* 중앙 정렬로 밀림 방지 */
+            justify-content: center;
             padding: 10px 0;
             gap: 15px;
             overflow: hidden;
         }
 
-        /* 메인 카드 사이즈 최적화 */
         .main-card {
             background: white;
             box-shadow: 0 40px 80px rgba(0,0,0,0.5);
             border-radius: 2.5rem;
             width: 88%;
-            max-width: 420px;
+            max-width: 400px;
             height: auto;
-            max-height: 60vh; /* 화면 높이에 따른 유동적 제한 */
+            max-height: 55vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
             padding: 24px;
-            z-index: 10;
             position: relative;
             transition: all 0.3s ease;
         }
@@ -92,7 +97,7 @@
         .color-box {
             width: 100%;
             flex: 1;
-            min-height: 140px; /* 최소 높이 보장 */
+            min-height: 140px;
             border-radius: 2rem;
             margin: 12px 0;
             box-shadow: inset 0 4px 10px rgba(0,0,0,0.1);
@@ -101,17 +106,18 @@
 
         .input-area {
             width: 88%;
-            max-width: 420px;
+            max-width: 400px;
             flex-shrink: 0;
-            margin-bottom: 10px;
-            z-index: 20;
+            margin-bottom: 20px;
+            padding-bottom: constant(safe-area-inset-bottom);
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* 키보드 활성화 시 대응 */
+        /* 키보드 대응 강화 */
         .keyboard-active #top-toolbar { height: 0; opacity: 0; pointer-events: none; }
-        .keyboard-active .main-stage { justify-content: flex-start; padding-top: 5px; }
-        .keyboard-active .main-card { transform: scale(0.8); max-height: 35vh; margin-top: -10px; }
-        .keyboard-active .input-area { transform: translateY(-5px); }
+        .keyboard-active .main-stage { justify-content: flex-start; padding-top: 10px; }
+        .keyboard-active .main-card { transform: scale(0.8); max-height: 30vh; margin-top: -20px; }
+        .keyboard-active .input-area { transform: translateY(-10px); }
 
         input {
             -webkit-appearance: none;
@@ -134,54 +140,52 @@
 </head>
 <body>
     
+    <!-- 배경을 담당하는 고정 레이어 -->
+    <div id="bg-layer"></div>
+
     <div id="viewport-root">
-        <!-- 툴바 -->
+        <!-- 상단 바 -->
         <div id="top-toolbar">
             <div class="flex items-center gap-2 text-white">
                 <div class="w-8 h-8 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
                     <div class="w-4 h-4 bg-white rounded-full"></div>
                 </div>
-                <div class="flex flex-col">
-                    <span class="font-black text-lg leading-none tracking-tight">PIXEL MASTER</span>
-                </div>
+                <span class="font-black text-lg tracking-tight">PIXEL MASTER</span>
             </div>
             <div class="bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-xl border border-white/20 text-white shadow-xl">
-                <span class="text-[9px] font-bold opacity-60 mr-2 uppercase tracking-tighter">Score</span>
+                <span class="text-[9px] font-bold opacity-60 mr-2 uppercase">Score</span>
                 <span id="score-display" class="font-black text-base">0</span>
             </div>
         </div>
 
         <div class="main-stage">
-            <!-- 게임 카드 -->
+            <!-- 문제 카드 -->
             <div id="game-container" class="main-card">
                 <div class="text-center w-full">
                     <p class="text-indigo-500 text-[10px] font-extrabold uppercase tracking-[0.2em] mb-1">Target Color</p>
-                    <h2 class="text-lg font-black text-slate-900 leading-tight">컬러 코드를 맞춰보세요</h2>
+                    <h2 class="text-lg font-black text-slate-900 leading-tight">색상을 맞춰보세요</h2>
                 </div>
 
                 <div id="target-color-box" class="color-box"></div>
 
-                <!-- 결과 대시보드 (오버레이 형식) -->
                 <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[2.5rem] flex flex-col items-center justify-center p-6 z-30 shadow-2xl">
                     <div id="status-badge" class="text-3xl font-black italic mb-1 tracking-tighter">GREAT!</div>
                     <div id="similarity-text" class="text-slate-900 font-extrabold text-xl mb-3">유사도: 98.5%</div>
-                    
                     <div class="w-full space-y-2 bg-slate-50 p-4 rounded-3xl border border-slate-100 mb-4">
                         <div id="diff-analysis"></div>
                     </div>
-                    
                     <div class="text-center">
                         <p id="correct-answer-info" class="text-[11px] font-mono font-black text-slate-500 mb-1"></p>
-                        <p class="text-[9px] font-bold text-indigo-500 animate-pulse uppercase tracking-widest">TAP ARROW TO CONTINUE</p>
+                        <p class="text-[9px] font-bold text-indigo-500 animate-pulse uppercase tracking-widest">TAP ARROW TO NEXT</p>
                     </div>
                 </div>
 
                 <div class="w-full text-center">
-                    <p class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Identify RGB/HEX values</p>
+                    <p class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">RGB/HEX Guessing Game</p>
                 </div>
             </div>
 
-            <!-- 입력 섹션 -->
+            <!-- 하단 입력창 -->
             <div class="input-area">
                 <div class="flex gap-3 items-center">
                     <div class="flex-1 flex gap-2 bg-white/10 backdrop-blur-3xl p-2.5 rounded-[2rem] border border-white/30 shadow-2xl">
@@ -211,13 +215,11 @@
 
     <!-- 게임 오버 -->
     <div id="overlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[1000] flex items-center justify-center hidden p-6">
-        <div class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl relative">
-            <h2 class="text-3xl font-black text-slate-900 mb-1 italic tracking-tighter">GAME OVER</h2>
-            <p id="final-score-msg" class="text-indigo-600 font-black mb-6 text-lg underline underline-offset-4 decoration-2 decoration-indigo-100">최종 점수: 0점</p>
-            
+        <div class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl">
+            <h2 class="text-3xl font-black text-slate-900 mb-1 italic">GAME OVER</h2>
+            <p id="final-score-msg" class="text-indigo-600 font-black mb-6 text-lg underline underline-offset-4 decoration-2">최종 점수: 0점</p>
             <div id="gameover-analysis" class="space-y-2 mb-6 text-left"></div>
-            
-            <button onclick="restartGame()" class="w-full btn-gradient text-white py-5 rounded-[2rem] font-black text-xl shadow-xl active:translate-y-1 transition-all border-b-4 border-black/20">RESTART</button>
+            <button onclick="restartGame()" class="w-full btn-gradient text-white py-5 rounded-[2rem] font-black text-xl shadow-xl active:translate-y-1 border-b-4 border-black/20">RESTART</button>
         </div>
     </div>
 
@@ -245,7 +247,7 @@
         const inputB = document.getElementById('input-b');
         const inputHex = document.getElementById('input-hex');
 
-        // 안정적인 레이아웃 싱크 로직 (이전 롤백 포인트)
+        // 레이아웃 동기화 (배경 잘림 방지용 고정 높이 처리)
         const syncLayout = () => {
             const vv = window.visualViewport;
             if (!vv) return;
@@ -388,11 +390,11 @@
             overlay.classList.remove('hidden');
             document.getElementById('final-score-msg').innerText = `최종 점수: ${score}점`;
             gameoverAnalysis.innerHTML = `
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">정답 데이터</p>
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-3">정답 데이터</p>
                 ${analysisHTML}
                 <div class="mt-4 pt-4 border-t border-slate-100 text-center">
                     <p class="text-2xl font-black text-red-500">${similarity.toFixed(1)}%</p>
-                    <p class="text-[9px] font-bold text-slate-300">정답률 75% 이상이어야 생존합니다.</p>
+                    <p class="text-[9px] font-bold text-slate-300">75% 이상이어야 합니다.</p>
                 </div>
             `;
             document.activeElement.blur();
