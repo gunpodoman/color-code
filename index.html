@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Pixel Master - Machugi Style</title>
+    <title>Pixel Master - Color Guess</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
@@ -15,78 +15,103 @@
             height: 100%;
             overflow: hidden;
             position: fixed;
-            background-color: #2e3192;
+            background: #1a1c4b;
             font-family: 'Pretendard', sans-serif;
             touch-action: none;
         }
 
+        /* 메인 배경 그라데이션 */
         #viewport-root {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
-            background-color: #2e3192;
+            background: linear-gradient(135deg, #1a1c4b 0%, #2e3192 100%);
             overflow: hidden;
-            transition: height 0.1s ease-out;
+            will-change: transform, height;
         }
 
-        /* 키보드 활성화 시 상단 툴바 숨김 처리 */
-        .keyboard-active #top-toolbar {
-            display: none;
+        /* 얼룩무늬 배경 패턴 (SVG Circles) */
+        #viewport-root::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='20' cy='20' r='10' fill='%23ffffff' fill-opacity='0.03'/%3E%3Ccircle cx='80' cy='50' r='15' fill='%238c31ff' fill-opacity='0.05'/%3E%3Ccircle cx='40' cy='80' r='8' fill='%23ffffff' fill-opacity='0.04'/%3E%3Ccircle cx='10' cy='90' r='20' fill='%23000000' fill-opacity='0.02'/%3E%3C/svg%3E");
+            background-size: 200px 200px;
+            pointer-events: none;
         }
 
-        .content-area {
+        #top-toolbar {
+            height: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 100;
+        }
+
+        .main-stage {
             flex: 1;
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 10px;
-            gap: 10px;
+            justify-content: flex-start;
+            padding-top: 3vh; /* 카드 크기가 커졌으므로 상단 여백 소폭 조정 */
+            gap: 24px;
         }
 
+        /* 카드 크기 확대 */
         .main-card {
             background: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            border-radius: 1.5rem;
-            width: 90%;
-            max-width: 400px;
-            /* 세로 공간에 따라 유연하게 줄어듦 */
-            max-height: 50vh; 
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            border-radius: 3rem;
+            width: 94%;
+            max-width: 440px; /* 기존 420px에서 더 확대 */
+            aspect-ratio: 1 / 1.15;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: 32px;
+            z-index: 10;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
-            transition: all 0.3s ease;
-            padding: 20px;
-        }
-
-        .keyboard-active .main-card {
-            max-height: 40vh; /* 키보드 뜰 때 카드 크기 더 축소 */
-            padding: 10px;
         }
 
         .color-box {
-            width: 120px;
-            height: 120px;
-            border-radius: 1rem;
-            transition: all 0.3s ease;
+            width: 75%; /* 더 시원하게 확대 */
+            aspect-ratio: 1/1;
+            border-radius: 2.5rem;
+            margin: 24px 0;
+            box-shadow: inset 0 4px 15px rgba(0,0,0,0.2), 0 15px 30px rgba(0,0,0,0.15);
+            border: 10px solid #f1f5f9;
         }
 
-        .keyboard-active .color-box {
-            width: 80px;
-            height: 80px;
+        .input-area {
+            width: 94%;
+            max-width: 440px;
+            z-index: 20;
         }
 
-        .input-container {
-            width: 90%;
-            max-width: 400px;
-            z-index: 50;
+        /* 입력창 스타일 */
+        input {
+            -webkit-appearance: none;
+            appearance: none;
+            border: none;
+            outline: none !important;
+            font-size: 20px; /* 가독성을 위해 폰트 크기 업 */
+        }
+
+        .keyboard-active #top-toolbar { opacity: 0; pointer-events: none; }
+        .keyboard-active .main-stage { padding-top: 1vh; }
+        .keyboard-active .main-card { transform: scale(0.8) translateY(-30px); }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #8c31ff 0%, #7021d7 100%);
         }
 
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
@@ -96,84 +121,92 @@
             30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
             40%, 60% { transform: translate3d(4px, 0, 0); }
         }
-
-        input {
-            -webkit-appearance: none;
-            appearance: none;
-            border: none;
-            outline: none !important;
-        }
     </style>
 </head>
 <body>
     
     <div id="viewport-root">
-        <!-- 상단 툴바 -->
-        <div id="top-toolbar" class="w-full p-4 flex justify-between items-center z-30 shrink-0">
-            <div class="flex items-center gap-2 text-white">
-                <div class="bg-white p-1 rounded">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#2e3192"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4z"></path></svg>
+        <div id="top-toolbar">
+            <div class="flex items-center gap-3 text-white">
+                <div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
+                    <div class="w-5 h-5 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>
                 </div>
-                <span class="font-black text-base tracking-tighter">MACHUGI.IO</span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl leading-none tracking-tight">PIXEL MASTER</span>
+                    <span class="text-[10px] font-bold text-white/50 tracking-widest uppercase">Color Trainer</span>
+                </div>
             </div>
-            <div class="bg-white/10 px-3 py-1 rounded-lg border border-white/20 text-white font-bold text-xs">
-                SCORE: <span id="score-display">0</span>
+            <div class="bg-white/10 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white shadow-xl">
+                <span class="text-[10px] font-bold opacity-60 mr-2 uppercase tracking-tighter">Score</span>
+                <span id="score-display" class="font-black text-lg">0</span>
             </div>
         </div>
 
-        <div class="content-area">
-            <!-- 카드 영역 -->
+        <div class="main-stage">
             <div id="game-container" class="main-card">
-                <div id="card-header" class="mb-4 text-center">
-                    <p class="text-slate-400 text-[8px] font-bold uppercase tracking-widest mb-0.5">Guess the Color</p>
-                    <h2 class="text-sm font-black text-slate-800">이 색상은 무엇일까요?</h2>
+                <div class="text-center w-full">
+                    <p class="text-indigo-500 text-[11px] font-extrabold uppercase tracking-[0.3em] mb-1">Target Color</p>
+                    <h2 class="text-xl font-black text-slate-900 leading-tight">이 색상은 무엇일까요?</h2>
                 </div>
 
-                <div id="target-color-box" class="color-box shadow-inner border-2 border-slate-100"></div>
+                <div id="target-color-box" class="color-box"></div>
 
-                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-2xl flex flex-col items-center justify-center p-4 z-30">
-                    <div id="status-badge" class="text-xl font-black italic">PERFECT!</div>
-                    <div id="similarity-text" class="text-slate-400 text-xs font-bold mb-2">유사도: 98.5%</div>
-                    <div id="diff-analysis" class="w-full space-y-1 bg-slate-50 p-2 rounded-xl border border-slate-100 mb-2"></div>
-                    <p id="correct-answer-info" class="text-[8px] font-mono font-bold text-slate-300 uppercase"></p>
+                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[3rem] flex flex-col items-center justify-center p-8 z-30 shadow-2xl">
+                    <div id="status-badge" class="text-4xl font-black italic mb-2 tracking-tighter">GREAT!</div>
+                    <div id="similarity-text" class="text-slate-900 font-extrabold text-xl mb-6">유사도: 98.5%</div>
+                    
+                    <div class="w-full space-y-3 bg-slate-50 p-6 rounded-[2rem] border border-slate-200 mb-6">
+                        <div id="diff-analysis"></div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p id="correct-answer-info" class="text-[12px] font-mono font-black text-slate-500 mb-1"></p>
+                        <p class="text-[10px] font-bold text-indigo-500 animate-pulse">버튼을 눌러 다음 스테이지로</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- 하단 입력창 (키보드 대응을 위해 배치 최적화) -->
-            <div class="input-container">
-                <div class="flex gap-2 items-center">
-                    <div class="flex-1 flex gap-1.5 bg-white p-1.5 rounded-xl shadow-2xl border border-white/20">
-                        <div id="ui-rgb" class="flex w-full gap-1">
-                            <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full py-3 bg-slate-100 rounded-lg text-center font-black text-lg text-slate-700 focus:bg-blue-50" inputmode="numeric">
-                            <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full py-3 bg-slate-100 rounded-lg text-center font-black text-lg text-slate-700 focus:bg-green-50" inputmode="numeric">
-                            <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full py-3 bg-slate-100 rounded-lg text-center font-black text-lg text-slate-700 focus:bg-blue-50" inputmode="numeric">
+            <div class="input-area">
+                <div class="flex gap-4 items-center">
+                    <div class="flex-1 flex gap-2.5 bg-white/10 backdrop-blur-3xl p-3 rounded-[2rem] border border-white/30 shadow-2xl">
+                        <div id="ui-rgb" class="flex w-full gap-2.5">
+                            <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full py-5 bg-white rounded-2xl text-center font-black text-2xl text-slate-800 shadow-inner" inputmode="numeric">
+                            <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full py-5 bg-white rounded-2xl text-center font-black text-2xl text-slate-800 shadow-inner" inputmode="numeric">
+                            <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full py-5 bg-white rounded-2xl text-center font-black text-2xl text-slate-800 shadow-inner" inputmode="numeric">
                         </div>
                         <div id="ui-hex" class="hidden w-full relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 font-black text-lg">#</span>
-                            <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full py-3 pl-8 bg-slate-100 rounded-lg font-mono text-lg uppercase font-black text-slate-700">
+                            <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-black text-2xl">#</span>
+                            <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full py-5 pl-14 bg-white rounded-2xl font-mono text-2xl uppercase font-black text-slate-800 shadow-inner">
                         </div>
                     </div>
 
-                    <button id="action-btn" onclick="handleMainAction()" class="w-14 h-14 shrink-0 bg-[#8c31ff] text-white rounded-xl shadow-lg flex items-center justify-center transition-all active:scale-90">
-                        <svg id="btn-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <button id="action-btn" onclick="handleMainAction()" class="w-24 h-24 shrink-0 btn-gradient text-white rounded-[2rem] shadow-xl flex items-center justify-center transition-all active:scale-95 border-b-[10px] border-black/20">
+                        <svg id="btn-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
                 </div>
 
-                <div class="flex justify-center mt-3 gap-6 pb-2">
-                    <button onclick="setMode('rgb')" id="mode-btn-rgb" class="text-[9px] font-black tracking-widest text-white uppercase">RGB Mode</button>
-                    <button onclick="setMode('hex')" id="mode-btn-hex" class="text-[9px] font-black tracking-widest text-white/40 uppercase">Hex Mode</button>
+                <div class="flex justify-center mt-6 gap-10">
+                    <button onclick="setMode('rgb')" id="mode-btn-rgb" class="text-sm font-black tracking-widest text-white uppercase border-b-4 border-white pb-1">RGB</button>
+                    <button onclick="setMode('hex')" id="mode-btn-hex" class="text-sm font-black tracking-widest text-white/40 uppercase pb-1">HEX</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 게임 오버 -->
-    <div id="overlay" class="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-50 flex items-center justify-center hidden p-6">
-        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
-            <div class="text-6xl mb-4">😵</div>
-            <h2 class="text-xl font-black text-slate-900 mb-1 italic uppercase">Game Over</h2>
-            <p id="final-score-msg" class="text-slate-400 font-bold mb-6 text-sm">Score: 0</p>
-            <button onclick="restartGame()" class="w-full bg-[#8c31ff] text-white py-4 rounded-xl font-black text-lg active:scale-95 transition-transform">RETRY</button>
+    <!-- 게임 오버 오버레이 -->
+    <div id="overlay" class="fixed inset-0 bg-slate-950/95 backdrop-blur-3xl z-[1000] flex items-center justify-center hidden p-8">
+        <div class="bg-white rounded-[3.5rem] p-10 max-w-md w-full text-center shadow-2xl overflow-hidden relative border-4 border-white/10">
+            <div class="absolute top-0 left-0 w-full h-3 btn-gradient"></div>
+            
+            <h2 class="text-4xl font-black text-slate-900 mb-2 italic uppercase tracking-tighter">GAME OVER</h2>
+            <p id="final-score-msg" class="text-indigo-600 font-black mb-8 text-xl underline underline-offset-8 decoration-4 decoration-indigo-200">최종 점수: 0점</p>
+            
+            <div class="bg-slate-50 rounded-[2.5rem] p-7 border border-slate-200 mb-8 text-left shadow-inner">
+                <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">분석 데이터</p>
+                <div id="gameover-analysis" class="space-y-3"></div>
+            </div>
+            
+            <button onclick="restartGame()" class="w-full btn-gradient text-white py-6 rounded-[2.5rem] font-black text-2xl shadow-xl active:translate-y-2 transition-all border-b-8 border-black/20">다시 도전하기</button>
         </div>
     </div>
 
@@ -182,7 +215,7 @@
         let targetColor = { r: 0, g: 0, b: 0 };
         let score = 0;
         let isResultState = false;
-        const SIMILARITY_THRESHOLD = 70;
+        const SIMILARITY_THRESHOLD = 75;
 
         const viewportRoot = document.getElementById('viewport-root');
         const targetBox = document.getElementById('target-color-box');
@@ -192,6 +225,7 @@
         const resultPanel = document.getElementById('result-panel');
         const statusBadge = document.getElementById('status-badge');
         const diffAnalysis = document.getElementById('diff-analysis');
+        const gameoverAnalysis = document.getElementById('gameover-analysis');
         const correctAnswerInfo = document.getElementById('correct-answer-info');
         const overlay = document.getElementById('overlay');
         const similarityText = document.getElementById('similarity-text');
@@ -201,31 +235,24 @@
         const inputB = document.getElementById('input-b');
         const inputHex = document.getElementById('input-hex');
 
-        // [핵심] 키보드 높이 감지 및 레이아웃 압축 로직
-        const handleVisualViewport = () => {
+        const syncLayout = () => {
             const vv = window.visualViewport;
             if (!vv) return;
-
-            // 1. 뷰포트 높이 고정 (화면 밀림 방지)
             viewportRoot.style.height = `${vv.height}px`;
             viewportRoot.style.transform = `translateY(${vv.offsetTop}px)`;
-            
-            // 2. 키보드가 올라온 상태인지 판단 (전체 화면의 80% 미만으로 줄어들면 키보드 활성으로 간주)
-            if (vv.height < window.innerHeight * 0.85) {
+            if (vv.height < window.innerHeight * 0.8) {
                 document.body.classList.add('keyboard-active');
             } else {
                 document.body.classList.remove('keyboard-active');
             }
-
             window.scrollTo(0, 0);
         };
 
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', handleVisualViewport);
-            window.visualViewport.addEventListener('scroll', handleVisualViewport);
+            window.visualViewport.addEventListener('resize', syncLayout);
+            window.visualViewport.addEventListener('scroll', syncLayout);
         }
 
-        // 스크롤 방지
         document.addEventListener('touchmove', (e) => {
             if (e.target.tagName !== 'INPUT') e.preventDefault();
         }, { passive: false });
@@ -233,12 +260,7 @@
         window.addEventListener('load', () => {
             generateNewColor();
             setMode('rgb');
-            handleVisualViewport();
-        });
-
-        // 엔터키 처리
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handleMainAction();
+            syncLayout();
         });
 
         function setMode(mode) {
@@ -247,8 +269,8 @@
             document.getElementById('ui-rgb').classList.toggle('hidden', mode !== 'rgb');
             document.getElementById('ui-hex').classList.toggle('hidden', mode !== 'hex');
             
-            document.getElementById('mode-btn-rgb').style.opacity = mode === 'rgb' ? "1" : "0.4";
-            document.getElementById('mode-btn-hex').style.opacity = mode === 'hex' ? "1" : "0.4";
+            document.getElementById('mode-btn-rgb').className = mode === 'rgb' ? "text-sm font-black tracking-widest text-white uppercase border-b-4 border-white pb-1" : "text-sm font-black tracking-widest text-white/40 uppercase pb-1";
+            document.getElementById('mode-btn-hex').className = mode === 'hex' ? "text-sm font-black tracking-widest text-white uppercase border-b-4 border-white pb-1" : "text-sm font-black tracking-widest text-white/40 uppercase pb-1";
 
             if(mode === 'rgb') inputR.focus();
             else inputHex.focus();
@@ -265,11 +287,7 @@
             resultPanel.classList.add('hidden');
             btnIcon.innerHTML = `<polyline points="9 18 15 12 9 6"></polyline>`;
             
-            [inputR, inputG, inputB, inputHex].forEach(el => {
-                el.disabled = false;
-                el.value = '';
-            });
-            
+            [inputR, inputG, inputB, inputHex].forEach(el => { el.disabled = false; el.value = ''; });
             if(currentMode === 'rgb') inputR.focus();
             else inputHex.focus();
         }
@@ -295,13 +313,13 @@
                     g: parseInt(result[2], 16),
                     b: parseInt(result[3], 16)
                 } : null;
+            }
 
-                if(!userRgb) {
-                    const container = document.getElementById('game-container');
-                    container.classList.add('shake');
-                    setTimeout(() => container.classList.remove('shake'), 500);
-                    return;
-                }
+            if(!userRgb) {
+                const container = document.getElementById('game-container');
+                container.classList.add('shake');
+                setTimeout(() => container.classList.remove('shake'), 500);
+                return;
             }
 
             const distance = Math.sqrt(
@@ -311,61 +329,82 @@
             );
             const similarity = Math.max(0, 100 - (distance / 441.67 * 100));
 
-            if(similarity < SIMILARITY_THRESHOLD) gameOver();
-            else showResult(similarity, userRgb);
+            const htmlContent = generateAnalysisHTML(userRgb);
+            
+            if(similarity < SIMILARITY_THRESHOLD) {
+                gameOver(similarity, htmlContent);
+            } else {
+                showResult(similarity, htmlContent);
+            }
         }
 
-        function showResult(similarity, userRgb) {
+        function generateAnalysisHTML(userRgb) {
+            const channels = [
+                { name: 'RED', target: targetColor.r, user: userRgb.r, color: 'bg-red-500' },
+                { name: 'GREEN', target: targetColor.g, user: userRgb.g, color: 'bg-green-500' },
+                { name: 'BLUE', target: targetColor.b, user: userRgb.b, color: 'bg-blue-500' }
+            ];
+
+            return channels.map(c => {
+                const diff = c.user - c.target;
+                const diffAbs = Math.abs(diff);
+                const diffText = diff === 0 ? 'MATCH' : (diff > 0 ? `+${diff}` : diff);
+                const barWidth = Math.min(100, (diffAbs / 255) * 100);
+                return `
+                    <div class="mb-3">
+                        <div class="flex items-center justify-between font-mono text-sm mb-1.5">
+                            <span class="font-black text-slate-800">${c.name}</span>
+                            <div class="flex gap-4">
+                                <span class="text-slate-400 font-bold">정답: ${c.target}</span>
+                                <span class="font-black ${diff === 0 ? 'text-emerald-500' : 'text-indigo-600'}">${diffText}</span>
+                            </div>
+                        </div>
+                        <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div class="${c.color} h-full transition-all duration-1000" style="width: ${100 - barWidth}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showResult(similarity, analysisHTML) {
             isResultState = true;
             [inputR, inputG, inputB, inputHex].forEach(el => el.disabled = true);
             resultPanel.classList.remove('hidden');
             similarityText.innerText = `유사도: ${similarity.toFixed(1)}%`;
             
-            if(similarity >= 95) {
+            if(similarity >= 96) {
                 statusBadge.innerText = "PERFECT!";
-                statusBadge.style.color = "#10b981";
-                score += 10;
-            } else if(similarity >= 85) {
+                statusBadge.className = "text-4xl font-black italic mb-2 tracking-tighter text-emerald-500";
+                score += 15;
+            } else if(similarity >= 88) {
                 statusBadge.innerText = "GREAT!";
-                statusBadge.style.color = "#3b82f6";
-                score += 5;
+                statusBadge.className = "text-4xl font-black italic mb-2 tracking-tighter text-blue-500";
+                score += 7;
             } else {
                 statusBadge.innerText = "GOOD!";
-                statusBadge.style.color = "#f59e0b";
-                score += 2;
+                statusBadge.className = "text-4xl font-black italic mb-2 tracking-tighter text-amber-500";
+                score += 3;
             }
             scoreDisplay.innerText = score;
-
-            const channels = [
-                { name: 'R', target: targetColor.r, user: userRgb.r, color: 'text-red-500' },
-                { name: 'G', target: targetColor.g, user: userRgb.g, color: 'text-green-500' },
-                { name: 'B', target: targetColor.b, user: userRgb.b, color: 'text-blue-500' }
-            ];
-
-            diffAnalysis.innerHTML = channels.map(c => {
-                const diff = c.user - c.target;
-                const diffText = diff === 0 ? 'MATCH' : (diff > 0 ? `+${diff}` : diff);
-                return `
-                    <div class="flex items-center justify-between font-mono text-[9px]">
-                        <span class="font-black ${c.color}">${c.name}</span>
-                        <div class="flex gap-2">
-                            <span class="text-slate-300">ANS: ${c.target}</span>
-                            <span class="font-bold text-slate-700">${diffText}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            diffAnalysis.innerHTML = analysisHTML;
 
             const targetHex = `#${targetColor.r.toString(16).padStart(2,'0')}${targetColor.g.toString(16).padStart(2,'0')}${targetColor.b.toString(16).padStart(2,'0')}`.toUpperCase();
             correctAnswerInfo.innerText = `TARGET HEX: ${targetHex}`;
             btnIcon.innerHTML = `<polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline>`;
-            
             document.activeElement.blur();
         }
 
-        function gameOver() {
+        function gameOver(similarity, analysisHTML) {
             overlay.classList.remove('hidden');
-            document.getElementById('final-score-msg').innerText = `Score: ${score}`;
+            document.getElementById('final-score-msg').innerText = `최종 점수: ${score}점`;
+            gameoverAnalysis.innerHTML = analysisHTML + `
+                <div class="mt-5 pt-5 border-t-2 border-slate-100 text-center">
+                    <p class="text-[11px] font-black text-slate-400 mb-1 uppercase tracking-widest">나의 유사도 결과</p>
+                    <p class="text-3xl font-black text-red-500">${similarity.toFixed(1)}%</p>
+                    <p class="text-[10px] font-bold text-slate-300 mt-2 italic">최소 75%의 유사도가 필요합니다.</p>
+                </div>
+            `;
             document.activeElement.blur();
         }
 
