@@ -8,66 +8,76 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
         
-        /* 화면 밀림 및 스크롤 원천 차단 */
+        /* [1] 하드웨어 가속 및 원천 스크롤 차단 */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100%;
+            height: 100% !important;
             overflow: hidden !important;
             position: fixed; 
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
+            background-color: #2e3192;
             font-family: 'Pretendard', sans-serif;
-            touch-action: none; 
-            overscroll-behavior: none;
-            background-color: #2e3192; /* 배경색 미리 지정 */
+            -webkit-text-size-adjust: 100%;
+            touch-action: none;
         }
 
-        /* 가상 키보드가 올라와도 밀리지 않는 절대 고정 컨테이너 */
-        .fixed-screen {
-            position: absolute;
+        /* [2] 키보드가 올라와도 밀리지 않는 고정 루트 컨테이너 */
+        #viewport-root {
+            position: fixed;
             top: 0;
             left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* 상단부터 배치하여 위치 제어 용이성 확보 */
+            z-index: 10;
+            overflow: hidden;
+            background-color: #2e3192;
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .machugi-bg {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 20%);
+            z-index: 0;
+        }
+
+        /* 메인 카드 및 입력창 레이아웃 - 키보드에 가려지지 않도록 살짝 위로 배치 */
+        .content-area {
+            position: relative;
+            z-index: 20;
             width: 100%;
-            height: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 5vh; /* 상단 여백 조절 */
+        }
+
+        .main-card {
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-radius: 1.5rem;
+            width: 85%;
+            aspect-ratio: 1 / 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 10;
+            position: relative;
         }
 
-        .machugi-bg {
-            background-color: #2e3192;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 0;
-        }
-
-        .bg-pattern {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-            pointer-events: none;
-        }
-
-        .pattern-1 { width: 400px; height: 400px; top: -100px; left: -100px; }
-        .pattern-2 { width: 500px; height: 500px; bottom: -150px; right: -150px; }
-
-        .main-card {
-            background: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            z-index: 20;
+        .input-area {
+            width: 85%;
+            margin-top: 1.5rem;
         }
 
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
@@ -78,83 +88,83 @@
             40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
+        input {
+            -webkit-appearance: none;
+            appearance: none;
+            border: none;
+            outline: none !important;
+        }
+
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
-        
-        /* 입력창 포커스 시 브라우저가 위로 올리는 걸 방지하기 위해 강제 위치 고정 */
-        input:focus {
-            outline: none;
-        }
     </style>
 </head>
 <body>
     
-    <div class="machugi-bg">
-        <div class="bg-pattern pattern-1"></div>
-        <div class="bg-pattern pattern-2"></div>
-    </div>
-
-    <div class="fixed-screen" id="viewport-root">
+    <div id="viewport-root">
+        <div class="machugi-bg"></div>
         
         <!-- 상단 툴바 -->
-        <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-30">
+        <div class="w-full p-4 flex justify-between items-center z-30">
             <div class="flex items-center gap-2 text-white">
                 <div class="bg-white p-1 rounded">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="#2e3192"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4z"></path></svg>
                 </div>
                 <span class="font-black text-lg tracking-tighter">MACHUGI.IO</span>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="bg-white/10 px-4 py-1.5 rounded-lg border border-white/20 text-white font-bold">
+            <div class="flex items-center gap-2">
+                <div class="bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 text-white font-bold text-sm">
                     SCORE: <span id="score-display">0</span>
                 </div>
-                <button onclick="location.reload()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-1.5 rounded-lg text-sm font-bold transition-all">새로고침</button>
+                <button onclick="location.reload()" class="bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all">새로고침</button>
             </div>
         </div>
 
-        <!-- 중앙 문제 영역 -->
-        <div id="game-container" class="relative w-[85%] max-w-lg aspect-square main-card rounded-xl flex flex-col items-center justify-center p-8 transition-all duration-500">
-            <div id="top-message" class="absolute top-8 left-0 w-full text-center px-6">
-                <p id="mode-text" class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Guess the Color</p>
-                <h2 id="question-title" class="text-xl md:text-2xl font-black text-slate-800 break-keep">이 색상은 무엇일까요?</h2>
-            </div>
-
-            <div id="target-color-box" class="w-32 h-32 md:w-52 md:h-52 rounded-2xl shadow-inner border-4 border-slate-50 transition-all duration-500"></div>
-
-            <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-xl flex flex-col items-center justify-center p-8 z-30">
-                <div id="status-badge" class="mb-2 text-3xl font-black italic">PERFECT!</div>
-                <div id="similarity-text" class="text-slate-400 text-sm font-bold mb-4">유사도: 98.5%</div>
-                <div id="diff-analysis" class="w-full space-y-2 mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100"></div>
-                <p id="correct-answer-info" class="text-xs font-mono font-bold text-slate-500"></p>
-            </div>
-        </div>
-
-        <!-- 하단 입력 영역 -->
-        <div class="mt-8 w-full max-w-lg px-4 z-20">
-            <div class="flex gap-3 items-center">
-                <div id="input-group" class="flex-1 flex gap-2 bg-white p-2 rounded-xl shadow-xl">
-                    <div id="ui-rgb" class="flex w-full gap-1">
-                        <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors" inputmode="numeric">
-                        <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-green-50 transition-colors" inputmode="numeric">
-                        <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors" inputmode="numeric">
-                    </div>
-                    <div id="ui-hex" class="hidden w-full relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-black text-xl">#</span>
-                        <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full p-4 pl-10 bg-slate-50 rounded-lg outline-none font-mono text-xl uppercase font-black text-slate-700">
-                    </div>
+        <div class="content-area">
+            <!-- 중앙 문제 영역 -->
+            <div id="game-container" class="main-card p-6 transition-all duration-500">
+                <div class="absolute top-6 left-0 w-full text-center">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Guess the Color</p>
+                    <h2 class="text-xl font-black text-slate-800">이 색상은 무엇일까요?</h2>
                 </div>
 
-                <button id="action-btn" onclick="handleMainAction()" class="w-16 h-16 shrink-0 bg-[#8c31ff] hover:bg-[#7a22ef] text-white rounded-xl shadow-lg flex items-center justify-center transition-all active:scale-90">
-                    <svg id="btn-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                </button>
+                <div id="target-color-box" class="w-32 h-32 md:w-44 md:h-44 rounded-2xl shadow-inner border-4 border-slate-50 transition-all duration-500"></div>
+
+                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-2xl flex flex-col items-center justify-center p-6 z-30">
+                    <div id="status-badge" class="mb-1 text-2xl font-black italic">PERFECT!</div>
+                    <div id="similarity-text" class="text-slate-400 text-sm font-bold mb-3 italic">유사도: 98.5%</div>
+                    <div id="diff-analysis" class="w-full space-y-2 mb-3 bg-slate-50 p-3 rounded-xl border border-slate-100"></div>
+                    <p id="correct-answer-info" class="text-[10px] font-mono font-bold text-slate-400 uppercase"></p>
+                </div>
             </div>
 
-            <div class="flex justify-center mt-4 gap-6">
-                <button onclick="setMode('rgb')" id="mode-btn-rgb" class="text-[10px] font-black tracking-widest text-white uppercase transition-colors">RGB Mode</button>
-                <button onclick="setMode('hex')" id="mode-btn-hex" class="text-[10px] font-black tracking-widest text-white/40 hover:text-white uppercase transition-colors">Hex Mode</button>
+            <!-- 하단 입력 영역 -->
+            <div class="input-area">
+                <div class="flex gap-2 items-center">
+                    <div class="flex-1 flex gap-2 bg-white p-2 rounded-xl shadow-xl">
+                        <div id="ui-rgb" class="flex w-full gap-1">
+                            <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full p-4 bg-slate-50 rounded-lg text-center font-black text-xl text-slate-700 focus:bg-blue-50" inputmode="numeric">
+                            <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full p-4 bg-slate-50 rounded-lg text-center font-black text-xl text-slate-700 focus:bg-green-50" inputmode="numeric">
+                            <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full p-4 bg-slate-50 rounded-lg text-center font-black text-xl text-slate-700 focus:bg-blue-50" inputmode="numeric">
+                        </div>
+                        <div id="ui-hex" class="hidden w-full relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-black text-xl">#</span>
+                            <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full p-4 pl-10 bg-slate-50 rounded-lg font-mono text-xl uppercase font-black text-slate-700">
+                        </div>
+                    </div>
+
+                    <button id="action-btn" onclick="handleMainAction()" class="w-16 h-16 shrink-0 bg-[#8c31ff] text-white rounded-xl shadow-lg flex items-center justify-center transition-all active:scale-90">
+                        <svg id="btn-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+
+                <div class="flex justify-center mt-4 gap-6">
+                    <button onclick="setMode('rgb')" id="mode-btn-rgb" class="text-[10px] font-black tracking-widest text-white uppercase transition-colors">RGB Mode</button>
+                    <button onclick="setMode('hex')" id="mode-btn-hex" class="text-[10px] font-black tracking-widest text-white/40 uppercase transition-colors">Hex Mode</button>
+                </div>
             </div>
         </div>
     </div>
@@ -163,9 +173,9 @@
     <div id="overlay" class="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-50 flex items-center justify-center hidden p-6">
         <div class="bg-white rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl">
             <div class="text-7xl mb-4">😵</div>
-            <h2 class="text-2xl font-black text-slate-900 mb-1 italic">GAME OVER</h2>
+            <h2 class="text-2xl font-black text-slate-900 mb-1 italic uppercase">Game Over</h2>
             <p id="final-score-msg" class="text-slate-400 font-bold mb-6">Score: 0</p>
-            <button onclick="restartGame()" class="w-full bg-[#8c31ff] text-white py-4 rounded-xl font-black text-lg hover:bg-[#7a22ef] transition-transform active:scale-95">RETRY</button>
+            <button onclick="restartGame()" class="w-full bg-[#8c31ff] text-white py-4 rounded-xl font-black text-lg active:scale-95 transition-transform">RETRY</button>
         </div>
     </div>
 
@@ -193,39 +203,51 @@
         const inputB = document.getElementById('input-b');
         const inputHex = document.getElementById('input-hex');
 
-        // [핵심 로직] 가상 키보드 대응 - 비주얼 뷰포트 고정
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', updateLayout);
-            window.visualViewport.addEventListener('scroll', updateLayout);
-        }
+        // [핵심] 키보드 올라올 때 화면 밀림 방지 스크립트
+        const handleVisualViewport = () => {
+            const vv = window.visualViewport;
+            if (!vv) return;
 
-        function updateLayout() {
-            // 키보드가 올라와도 viewportRoot(메인 컨테이너)의 위치를 강제로 보정
-            const v = window.visualViewport;
-            viewportRoot.style.height = v.height + 'px';
-            viewportRoot.style.top = v.offsetTop + 'px';
-            viewportRoot.style.left = v.offsetLeft + 'px';
+            // 브라우저가 화면을 밀어올린 만큼(offsetTop) 다시 루트를 아래로 당겨서 고정
+            // 그리고 뷰포트 높이가 줄어든 만큼 컨테이너 높이 조절
+            viewportRoot.style.height = `${vv.height}px`;
+            viewportRoot.style.transform = `translateY(${vv.offsetTop}px)`;
             
-            // 브라우저의 기본 스크롤 시도를 강제로 0으로 유지
+            // 모든 형태의 스크롤을 0으로 강제 고정
             window.scrollTo(0, 0);
+            document.body.scrollTop = 0;
+        };
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleVisualViewport);
+            window.visualViewport.addEventListener('scroll', handleVisualViewport);
         }
 
-        // 초기 로드 시 레이아웃 초기화
+        // 터치 스크롤 원천 차단
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
         window.addEventListener('load', () => {
             generateNewColor();
             setMode('rgb');
-            updateLayout();
+            handleVisualViewport();
         });
 
-        // 엔터 키 이벤트
+        // 엔터키 처리
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') handleMainAction();
         });
 
-        // 자동 포커스 이동
-        inputR.addEventListener('input', (e) => { if(e.target.value.length >= 3) inputG.focus(); });
-        inputG.addEventListener('input', (e) => { if(e.target.value.length >= 3) inputB.focus(); });
-        inputB.addEventListener('input', (e) => { if(e.target.value.length >= 3) actionBtn.focus(); });
+        // 입력 시 자동 이동
+        const handleAutoTab = (e, next) => {
+            if (e.target.value.length >= 3) next.focus();
+        };
+        inputR.addEventListener('input', (e) => handleAutoTab(e, inputG));
+        inputG.addEventListener('input', (e) => handleAutoTab(e, inputB));
+        inputB.addEventListener('input', (e) => handleAutoTab(e, actionBtn));
 
         function setMode(mode) {
             if(isResultState) return;
@@ -235,11 +257,8 @@
             
             const btnRgb = document.getElementById('mode-btn-rgb');
             const btnHex = document.getElementById('mode-btn-hex');
-            
-            btnRgb.classList.toggle('text-white', mode === 'rgb');
-            btnRgb.classList.toggle('text-white/40', mode !== 'rgb');
-            btnHex.classList.toggle('text-white', mode === 'hex');
-            btnHex.classList.toggle('text-white/40', mode !== 'hex');
+            btnRgb.style.opacity = mode === 'rgb' ? "1" : "0.4";
+            btnHex.style.opacity = mode === 'hex' ? "1" : "0.4";
 
             if(mode === 'rgb') inputR.focus();
             else inputHex.focus();
@@ -247,27 +266,27 @@
 
         function generateNewColor() {
             isResultState = false;
-            targetColor.r = Math.floor(Math.random() * 256);
-            targetColor.g = Math.floor(Math.random() * 256);
-            targetColor.b = Math.floor(Math.random() * 256);
+            targetColor = {
+                r: Math.floor(Math.random() * 256),
+                g: Math.floor(Math.random() * 256),
+                b: Math.floor(Math.random() * 256)
+            };
             targetBox.style.backgroundColor = `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`;
-            
             resultPanel.classList.add('hidden');
             btnIcon.innerHTML = `<polyline points="9 18 15 12 9 6"></polyline>`;
             
-            inputR.disabled = false; inputG.disabled = false; inputB.disabled = false; inputHex.disabled = false;
-            inputR.value = ''; inputG.value = ''; inputB.value = ''; inputHex.value = '';
+            [inputR, inputG, inputB, inputHex].forEach(el => {
+                el.disabled = false;
+                el.value = '';
+            });
             
             if(currentMode === 'rgb') inputR.focus();
             else inputHex.focus();
         }
 
         function handleMainAction() {
-            if (isResultState) {
-                generateNewColor();
-            } else {
-                checkAnswer();
-            }
+            if (isResultState) generateNewColor();
+            else checkAnswer();
         }
 
         function checkAnswer() {
@@ -280,7 +299,7 @@
                 };
             } else {
                 const hex = inputHex.value;
-                var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
                 userRgb = result ? {
                     r: parseInt(result[1], 16),
                     g: parseInt(result[2], 16),
@@ -302,31 +321,27 @@
             );
             const similarity = Math.max(0, 100 - (distance / 441.67 * 100));
 
-            if(similarity < SIMILARITY_THRESHOLD) {
-                gameOver();
-            } else {
-                showResult(similarity, userRgb);
-            }
+            if(similarity < SIMILARITY_THRESHOLD) gameOver();
+            else showResult(similarity, userRgb);
         }
 
         function showResult(similarity, userRgb) {
             isResultState = true;
-            inputR.disabled = true; inputG.disabled = true; inputB.disabled = true; inputHex.disabled = true;
-
+            [inputR, inputG, inputB, inputHex].forEach(el => el.disabled = true);
             resultPanel.classList.remove('hidden');
             similarityText.innerText = `유사도: ${similarity.toFixed(1)}%`;
             
             if(similarity >= 95) {
                 statusBadge.innerText = "PERFECT!";
-                statusBadge.className = "mb-2 text-3xl font-black italic text-emerald-500";
+                statusBadge.className = "mb-1 text-2xl font-black italic text-emerald-500";
                 score += 10;
             } else if(similarity >= 85) {
                 statusBadge.innerText = "GREAT!";
-                statusBadge.className = "mb-2 text-3xl font-black italic text-blue-500";
+                statusBadge.className = "mb-1 text-2xl font-black italic text-blue-500";
                 score += 5;
             } else {
                 statusBadge.innerText = "GOOD!";
-                statusBadge.className = "mb-2 text-3xl font-black italic text-amber-500";
+                statusBadge.className = "mb-1 text-2xl font-black italic text-amber-500";
                 score += 2;
             }
             scoreDisplay.innerText = score;
@@ -339,13 +354,12 @@
 
             diffAnalysis.innerHTML = channels.map(c => {
                 const diff = c.user - c.target;
-                const sign = diff > 0 ? '+' : '';
-                const diffText = diff === 0 ? 'MATCH' : `${sign}${diff}`;
+                const diffText = diff === 0 ? 'MATCH' : (diff > 0 ? `+${diff}` : diff);
                 return `
-                    <div class="flex items-center justify-between font-mono text-xs">
+                    <div class="flex items-center justify-between font-mono text-[10px]">
                         <span class="font-black ${c.color}">${c.name}</span>
-                        <div class="flex gap-4">
-                            <span class="text-slate-400">정답: ${c.target}</span>
+                        <div class="flex gap-3">
+                            <span class="text-slate-400 text-[8px]">ANSWER: ${c.target}</span>
                             <span class="font-bold text-slate-800">${diffText}</span>
                         </div>
                     </div>
@@ -354,14 +368,16 @@
 
             const targetHex = `#${targetColor.r.toString(16).padStart(2,'0')}${targetColor.g.toString(16).padStart(2,'0')}${targetColor.b.toString(16).padStart(2,'0')}`.toUpperCase();
             correctAnswerInfo.innerText = `TARGET HEX: ${targetHex}`;
-
             btnIcon.innerHTML = `<polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline>`;
-            actionBtn.focus();
+            
+            // 결과 확인 시 키보드 닫기 (강제 포커스 해제)
+            document.activeElement.blur();
         }
 
         function gameOver() {
             overlay.classList.remove('hidden');
             document.getElementById('final-score-msg').innerText = `Score: ${score}`;
+            document.activeElement.blur();
         }
 
         function restartGame() {
