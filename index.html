@@ -2,37 +2,45 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Pixel Master - Machugi Style</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
         
-        body, html {
+        /* 스크롤 및 바운스 효과 원천 차단 */
+        html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            overflow: hidden !important;
+            position: fixed; /* 전체 레이아웃을 화면에 고정 */
             font-family: 'Pretendard', sans-serif;
+            touch-action: none; /* 터치 제스처로 인한 스크롤 방지 */
+            overscroll-behavior: none; /* iOS/iPadOS 바운스 방지 */
         }
 
-        /* 마추기 아이오 특유의 배경 디자인 */
         .machugi-bg {
             background-color: #2e3192;
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 20%),
                 radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 20%),
                 radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
-            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* 배경의 둥근 곡선 패턴 구현 */
         .bg-pattern {
             position: absolute;
             background: rgba(255, 255, 255, 0.03);
             border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
             z-index: 0;
+            pointer-events: none;
         }
 
         .pattern-1 { width: 400px; height: 400px; top: -100px; left: -100px; }
@@ -44,7 +52,17 @@
             z-index: 10;
         }
 
-        /* 흔들림 효과 */
+        /* 입력창 포커스 시에도 레이아웃 유지 */
+        .game-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake {
             10%, 90% { transform: translate3d(-1px, 0, 0); }
@@ -60,91 +78,81 @@
         }
     </style>
 </head>
-<body class="machugi-bg flex flex-col items-center justify-center p-0">
+<body class="machugi-bg">
     
     <div class="bg-pattern pattern-1"></div>
     <div class="bg-pattern pattern-2"></div>
 
-    <!-- 상단 툴바 (Machugi 스타일) -->
-    <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-20">
-        <div class="flex items-center gap-2 text-white">
-            <div class="bg-white p-1 rounded">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="#2e3192"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4z"></path></svg>
-            </div>
-            <span class="font-black text-lg tracking-tighter">MACHUGI.IO</span>
-        </div>
-        <div class="flex items-center gap-4">
-            <div class="bg-white/10 px-4 py-1.5 rounded-lg border border-white/20 text-white font-bold">
-                SCORE: <span id="score-display">0</span>
-            </div>
-            <button onclick="location.reload()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-1.5 rounded-lg text-sm font-bold transition-all">새로고침</button>
-        </div>
-    </div>
-
-    <!-- 중앙 문제 영역 (Machugi 스타일 화이트 박스) -->
-    <div id="game-container" class="relative w-[90%] max-w-lg aspect-square main-card rounded-xl flex flex-col items-center justify-center p-8 transition-all duration-500">
+    <!-- 전체 래퍼 (정렬 유지용) -->
+    <div class="game-wrapper">
         
-        <!-- 문제 설명/상태 -->
-        <div id="top-message" class="absolute top-8 left-0 w-full text-center px-6">
-            <p id="mode-text" class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Guess the Color</p>
-            <h2 id="question-title" class="text-2xl font-black text-slate-800 break-keep">이 픽셀의 색상 값은 무엇일까요?</h2>
+        <!-- 상단 툴바 -->
+        <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-20">
+            <div class="flex items-center gap-2 text-white">
+                <div class="bg-white p-1 rounded">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#2e3192"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4z"></path></svg>
+                </div>
+                <span class="font-black text-lg tracking-tighter">MACHUGI.IO</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="bg-white/10 px-4 py-1.5 rounded-lg border border-white/20 text-white font-bold">
+                    SCORE: <span id="score-display">0</span>
+                </div>
+                <button onclick="location.reload()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-1.5 rounded-lg text-sm font-bold transition-all">새로고침</button>
+            </div>
         </div>
 
-        <!-- 컬러 박스 (중앙) -->
-        <div id="target-color-box" class="w-40 h-40 md:w-56 md:h-56 rounded-2xl shadow-inner border-4 border-slate-50 transition-all duration-500"></div>
-
-        <!-- 결과 분석 패널 (정답 확인 시 노출) -->
-        <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-xl flex flex-col items-center justify-center p-8 z-30">
-            <div id="status-badge" class="mb-4 text-4xl font-black italic">PERFECT!</div>
-            <div id="similarity-text" class="text-slate-400 text-sm font-bold mb-6">유사도: 98.5%</div>
-            
-            <div id="diff-analysis" class="w-full space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <!-- 분석 내용 주입 -->
+        <!-- 중앙 문제 영역 -->
+        <div id="game-container" class="relative w-[85%] max-w-lg aspect-square main-card rounded-xl flex flex-col items-center justify-center p-8 transition-all duration-500">
+            <div id="top-message" class="absolute top-8 left-0 w-full text-center px-6">
+                <p id="mode-text" class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Guess the Color</p>
+                <h2 id="question-title" class="text-xl md:text-2xl font-black text-slate-800 break-keep">이 색상은 무엇일까요?</h2>
             </div>
-            
-            <p id="correct-answer-info" class="text-sm font-mono font-bold text-slate-500"></p>
+
+            <div id="target-color-box" class="w-32 h-32 md:w-52 md:h-52 rounded-2xl shadow-inner border-4 border-slate-50 transition-all duration-500"></div>
+
+            <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-xl flex flex-col items-center justify-center p-8 z-30">
+                <div id="status-badge" class="mb-2 text-3xl font-black italic">PERFECT!</div>
+                <div id="similarity-text" class="text-slate-400 text-sm font-bold mb-4">유사도: 98.5%</div>
+                <div id="diff-analysis" class="w-full space-y-2 mb-4 bg-slate-50 p-4 rounded-xl border border-slate-100"></div>
+                <p id="correct-answer-info" class="text-xs font-mono font-bold text-slate-500"></p>
+            </div>
+        </div>
+
+        <!-- 하단 입력 영역 -->
+        <div class="mt-8 w-full max-w-lg px-4 z-10">
+            <div class="flex gap-3 items-center">
+                <div id="input-group" class="flex-1 flex gap-2 bg-white p-2 rounded-xl shadow-xl">
+                    <div id="ui-rgb" class="flex w-full gap-1">
+                        <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors">
+                        <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-green-50 transition-colors">
+                        <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors">
+                    </div>
+                    <div id="ui-hex" class="hidden w-full relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-black text-xl">#</span>
+                        <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full p-4 pl-10 bg-slate-50 rounded-lg outline-none font-mono text-xl uppercase font-black text-slate-700">
+                    </div>
+                </div>
+
+                <button id="action-btn" onclick="handleMainAction()" class="w-16 h-16 shrink-0 bg-[#8c31ff] hover:bg-[#7a22ef] text-white rounded-xl shadow-lg flex items-center justify-center transition-all active:scale-90">
+                    <svg id="btn-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+
+            <div class="flex justify-center mt-4 gap-6">
+                <button onclick="setMode('rgb')" id="mode-btn-rgb" class="text-[10px] font-black tracking-widest text-white uppercase transition-colors">RGB Mode</button>
+                <button onclick="setMode('hex')" id="mode-btn-hex" class="text-[10px] font-black tracking-widest text-white/40 hover:text-white uppercase transition-colors">Hex Mode</button>
+            </div>
         </div>
     </div>
 
-    <!-- 하단 입력 영역 ( Machugi 스타일 ) -->
-    <div class="mt-8 w-full max-w-lg px-4 z-10">
-        <div class="flex gap-3 items-center">
-            
-            <!-- 입력 필드 그룹 -->
-            <div id="input-group" class="flex-1 flex gap-2 bg-white p-2 rounded-xl shadow-lg">
-                <!-- RGB 입력 -->
-                <div id="ui-rgb" class="flex w-full gap-1">
-                    <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors">
-                    <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-green-50 transition-colors">
-                    <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors">
-                </div>
-                <!-- HEX 입력 -->
-                <div id="ui-hex" class="hidden w-full relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-black text-xl">#</span>
-                    <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full p-4 pl-10 bg-slate-50 rounded-lg outline-none font-mono text-xl uppercase font-black text-slate-700">
-                </div>
-            </div>
-
-            <!-- 실행 버튼 -->
-            <button id="action-btn" onclick="handleMainAction()" class="w-16 h-16 shrink-0 bg-[#8c31ff] hover:bg-[#7a22ef] text-white rounded-xl shadow-lg flex items-center justify-center transition-all active:scale-90">
-                <svg id="btn-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </button>
-        </div>
-
-        <!-- 모드 전환 버튼 -->
-        <div class="flex justify-center mt-4 gap-4">
-            <button onclick="setMode('rgb')" id="mode-btn-rgb" class="text-[10px] font-black tracking-widest text-white/40 hover:text-white uppercase transition-colors">RGB Mode</button>
-            <button onclick="setMode('hex')" id="mode-btn-hex" class="text-[10px] font-black tracking-widest text-white/40 hover:text-white uppercase transition-colors">Hex Mode</button>
-        </div>
-    </div>
-
-    <!-- 게임 오버 오버레이 -->
+    <!-- 게임 오버 -->
     <div id="overlay" class="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-50 flex items-center justify-center hidden p-6">
         <div class="bg-white rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl">
-            <div class="text-7xl mb-6">😵</div>
-            <h2 class="text-3xl font-black text-slate-900 mb-2 italic">GAME OVER</h2>
-            <p id="final-score-msg" class="text-slate-400 font-bold mb-8">Score: 0</p>
-            <button onclick="restartGame()" class="w-full bg-[#8c31ff] text-white py-5 rounded-xl font-black text-xl hover:bg-[#7a22ef] transition-transform active:scale-95 shadow-xl shadow-purple-500/20">RETRY</button>
+            <div class="text-7xl mb-4">😵</div>
+            <h2 class="text-2xl font-black text-slate-900 mb-1 italic">GAME OVER</h2>
+            <p id="final-score-msg" class="text-slate-400 font-bold mb-6">Score: 0</p>
+            <button onclick="restartGame()" class="w-full bg-[#8c31ff] text-white py-4 rounded-xl font-black text-lg hover:bg-[#7a22ef] transition-transform active:scale-95">RETRY</button>
         </div>
     </div>
 
@@ -179,11 +187,17 @@
                 if (e.key === 'Enter') handleMainAction();
             });
 
-            // 포커스 자동 이동
+            // 포커스 이동
             inputR.addEventListener('input', (e) => { if(e.target.value.length >= 3) inputG.focus(); });
             inputG.addEventListener('input', (e) => { if(e.target.value.length >= 3) inputB.focus(); });
             inputB.addEventListener('input', (e) => { if(e.target.value.length >= 3) actionBtn.focus(); });
         };
+
+        // 아이패드 키보드 올라올 때 스크롤되는 것을 강제 방지
+        window.addEventListener('scroll', (e) => {
+            e.preventDefault();
+            window.scrollTo(0, 0);
+        }, { passive: false });
 
         function setMode(mode) {
             if(isResultState) return;
@@ -276,20 +290,19 @@
             
             if(similarity >= 95) {
                 statusBadge.innerText = "PERFECT!";
-                statusBadge.className = "mb-4 text-4xl font-black italic text-emerald-500";
+                statusBadge.className = "mb-2 text-3xl font-black italic text-emerald-500";
                 score += 10;
             } else if(similarity >= 85) {
                 statusBadge.innerText = "GREAT!";
-                statusBadge.className = "mb-4 text-4xl font-black italic text-blue-500";
+                statusBadge.className = "mb-2 text-3xl font-black italic text-blue-500";
                 score += 5;
             } else {
                 statusBadge.innerText = "GOOD!";
-                statusBadge.className = "mb-4 text-4xl font-black italic text-amber-500";
+                statusBadge.className = "mb-2 text-3xl font-black italic text-amber-500";
                 score += 2;
             }
             scoreDisplay.innerText = score;
 
-            // 상세 오차 분석
             const channels = [
                 { name: 'R', target: targetColor.r, user: userRgb.r, color: 'text-red-500' },
                 { name: 'G', target: targetColor.g, user: userRgb.g, color: 'text-green-500' },
@@ -301,7 +314,7 @@
                 const sign = diff > 0 ? '+' : '';
                 const diffText = diff === 0 ? 'MATCH' : `${sign}${diff}`;
                 return `
-                    <div class="flex items-center justify-between font-mono text-sm">
+                    <div class="flex items-center justify-between font-mono text-xs">
                         <span class="font-black ${c.color}">${c.name}</span>
                         <div class="flex gap-4">
                             <span class="text-slate-400">정답: ${c.target}</span>
@@ -320,7 +333,7 @@
 
         function gameOver() {
             overlay.classList.remove('hidden');
-            document.getElementById('final-score-msg').innerText = `Your Score: ${score}`;
+            document.getElementById('final-score-msg').innerText = `Score: ${score}`;
         }
 
         function restartGame() {
