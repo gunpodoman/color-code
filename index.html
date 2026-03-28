@@ -8,17 +8,36 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
         
-        /* 스크롤 및 바운스 효과 원천 차단 */
+        /* 화면 밀림 및 스크롤 원천 차단 */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden !important;
-            position: fixed; /* 전체 레이아웃을 화면에 고정 */
+            position: fixed; 
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             font-family: 'Pretendard', sans-serif;
-            touch-action: none; /* 터치 제스처로 인한 스크롤 방지 */
-            overscroll-behavior: none; /* iOS/iPadOS 바운스 방지 */
+            touch-action: none; 
+            overscroll-behavior: none;
+            background-color: #2e3192; /* 배경색 미리 지정 */
+        }
+
+        /* 가상 키보드가 올라와도 밀리지 않는 절대 고정 컨테이너 */
+        .fixed-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
         }
 
         .machugi-bg {
@@ -29,17 +48,16 @@
                 radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
             width: 100%;
             height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
         }
 
         .bg-pattern {
             position: absolute;
             background: rgba(255, 255, 255, 0.03);
             border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-            z-index: 0;
             pointer-events: none;
         }
 
@@ -49,18 +67,7 @@
         .main-card {
             background: white;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            z-index: 10;
-        }
-
-        /* 입력창 포커스 시에도 레이아웃 유지 */
-        .game-wrapper {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            z-index: 20;
         }
 
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
@@ -76,18 +83,24 @@
             -webkit-appearance: none;
             margin: 0;
         }
+        
+        /* 입력창 포커스 시 브라우저가 위로 올리는 걸 방지하기 위해 강제 위치 고정 */
+        input:focus {
+            outline: none;
+        }
     </style>
 </head>
-<body class="machugi-bg">
+<body>
     
-    <div class="bg-pattern pattern-1"></div>
-    <div class="bg-pattern pattern-2"></div>
+    <div class="machugi-bg">
+        <div class="bg-pattern pattern-1"></div>
+        <div class="bg-pattern pattern-2"></div>
+    </div>
 
-    <!-- 전체 래퍼 (정렬 유지용) -->
-    <div class="game-wrapper">
+    <div class="fixed-screen" id="viewport-root">
         
         <!-- 상단 툴바 -->
-        <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-20">
+        <div class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-30">
             <div class="flex items-center gap-2 text-white">
                 <div class="bg-white p-1 rounded">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="#2e3192"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4z"></path></svg>
@@ -120,13 +133,13 @@
         </div>
 
         <!-- 하단 입력 영역 -->
-        <div class="mt-8 w-full max-w-lg px-4 z-10">
+        <div class="mt-8 w-full max-w-lg px-4 z-20">
             <div class="flex gap-3 items-center">
                 <div id="input-group" class="flex-1 flex gap-2 bg-white p-2 rounded-xl shadow-xl">
                     <div id="ui-rgb" class="flex w-full gap-1">
-                        <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors">
-                        <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-green-50 transition-colors">
-                        <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors">
+                        <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors" inputmode="numeric">
+                        <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-green-50 transition-colors" inputmode="numeric">
+                        <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full p-4 bg-slate-50 rounded-lg outline-none text-center font-black text-xl text-slate-700 focus:bg-blue-50 transition-colors" inputmode="numeric">
                     </div>
                     <div id="ui-hex" class="hidden w-full relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-black text-xl">#</span>
@@ -163,6 +176,7 @@
         let isResultState = false;
         const SIMILARITY_THRESHOLD = 70;
 
+        const viewportRoot = document.getElementById('viewport-root');
         const targetBox = document.getElementById('target-color-box');
         const scoreDisplay = document.getElementById('score-display');
         const actionBtn = document.getElementById('action-btn');
@@ -179,25 +193,39 @@
         const inputB = document.getElementById('input-b');
         const inputHex = document.getElementById('input-hex');
 
-        window.onload = () => {
+        // [핵심 로직] 가상 키보드 대응 - 비주얼 뷰포트 고정
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', updateLayout);
+            window.visualViewport.addEventListener('scroll', updateLayout);
+        }
+
+        function updateLayout() {
+            // 키보드가 올라와도 viewportRoot(메인 컨테이너)의 위치를 강제로 보정
+            const v = window.visualViewport;
+            viewportRoot.style.height = v.height + 'px';
+            viewportRoot.style.top = v.offsetTop + 'px';
+            viewportRoot.style.left = v.offsetLeft + 'px';
+            
+            // 브라우저의 기본 스크롤 시도를 강제로 0으로 유지
+            window.scrollTo(0, 0);
+        }
+
+        // 초기 로드 시 레이아웃 초기화
+        window.addEventListener('load', () => {
             generateNewColor();
             setMode('rgb');
-            
-            window.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') handleMainAction();
-            });
+            updateLayout();
+        });
 
-            // 포커스 이동
-            inputR.addEventListener('input', (e) => { if(e.target.value.length >= 3) inputG.focus(); });
-            inputG.addEventListener('input', (e) => { if(e.target.value.length >= 3) inputB.focus(); });
-            inputB.addEventListener('input', (e) => { if(e.target.value.length >= 3) actionBtn.focus(); });
-        };
+        // 엔터 키 이벤트
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleMainAction();
+        });
 
-        // 아이패드 키보드 올라올 때 스크롤되는 것을 강제 방지
-        window.addEventListener('scroll', (e) => {
-            e.preventDefault();
-            window.scrollTo(0, 0);
-        }, { passive: false });
+        // 자동 포커스 이동
+        inputR.addEventListener('input', (e) => { if(e.target.value.length >= 3) inputG.focus(); });
+        inputG.addEventListener('input', (e) => { if(e.target.value.length >= 3) inputB.focus(); });
+        inputB.addEventListener('input', (e) => { if(e.target.value.length >= 3) actionBtn.focus(); });
 
         function setMode(mode) {
             if(isResultState) return;
