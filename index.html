@@ -8,23 +8,18 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
         
-        /* [1] 하드웨어 가속 및 원천 스크롤 차단 */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100% !important;
-            overflow: hidden !important;
-            position: fixed; 
-            top: 0;
-            left: 0;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
             background-color: #2e3192;
             font-family: 'Pretendard', sans-serif;
-            -webkit-text-size-adjust: 100%;
             touch-action: none;
         }
 
-        /* [2] 키보드가 올라와도 밀리지 않는 고정 루트 컨테이너 */
         #viewport-root {
             position: fixed;
             top: 0;
@@ -33,51 +28,65 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: flex-start; /* 상단부터 배치하여 위치 제어 용이성 확보 */
-            z-index: 10;
-            overflow: hidden;
             background-color: #2e3192;
-            padding-top: env(safe-area-inset-top);
+            overflow: hidden;
+            transition: height 0.1s ease-out;
         }
 
-        .machugi-bg {
-            position: absolute;
-            inset: 0;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 20%);
-            z-index: 0;
+        /* 키보드 활성화 시 상단 툴바 숨김 처리 */
+        .keyboard-active #top-toolbar {
+            display: none;
         }
 
-        /* 메인 카드 및 입력창 레이아웃 - 키보드에 가려지지 않도록 살짝 위로 배치 */
         .content-area {
-            position: relative;
-            z-index: 20;
-            width: 100%;
-            max-width: 500px;
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 5vh; /* 상단 여백 조절 */
+            justify-content: center;
+            width: 100%;
+            padding: 10px;
+            gap: 10px;
         }
 
         .main-card {
             background: white;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             border-radius: 1.5rem;
-            width: 85%;
-            aspect-ratio: 1 / 1;
+            width: 90%;
+            max-width: 400px;
+            /* 세로 공간에 따라 유연하게 줄어듦 */
+            max-height: 50vh; 
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             position: relative;
+            transition: all 0.3s ease;
+            padding: 20px;
         }
 
-        .input-area {
-            width: 85%;
-            margin-top: 1.5rem;
+        .keyboard-active .main-card {
+            max-height: 40vh; /* 키보드 뜰 때 카드 크기 더 축소 */
+            padding: 10px;
+        }
+
+        .color-box {
+            width: 120px;
+            height: 120px;
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .keyboard-active .color-box {
+            width: 80px;
+            height: 80px;
+        }
+
+        .input-container {
+            width: 90%;
+            max-width: 400px;
+            z-index: 50;
         }
 
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
@@ -94,76 +103,65 @@
             border: none;
             outline: none !important;
         }
-
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
     </style>
 </head>
 <body>
     
     <div id="viewport-root">
-        <div class="machugi-bg"></div>
-        
         <!-- 상단 툴바 -->
-        <div class="w-full p-4 flex justify-between items-center z-30">
+        <div id="top-toolbar" class="w-full p-4 flex justify-between items-center z-30 shrink-0">
             <div class="flex items-center gap-2 text-white">
                 <div class="bg-white p-1 rounded">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#2e3192"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4z"></path></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#2e3192"><path d="M3 13h1v7c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-7h1a1 1 0 0 0 .707-1.707l-9-9a.999.999 0 0 0-1.414 0l-9 9A1 1 0 0 0 3 13zm7 7v-5h4v5h-4z"></path></svg>
                 </div>
-                <span class="font-black text-lg tracking-tighter">MACHUGI.IO</span>
+                <span class="font-black text-base tracking-tighter">MACHUGI.IO</span>
             </div>
-            <div class="flex items-center gap-2">
-                <div class="bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 text-white font-bold text-sm">
-                    SCORE: <span id="score-display">0</span>
-                </div>
-                <button onclick="location.reload()" class="bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all">새로고침</button>
+            <div class="bg-white/10 px-3 py-1 rounded-lg border border-white/20 text-white font-bold text-xs">
+                SCORE: <span id="score-display">0</span>
             </div>
         </div>
 
         <div class="content-area">
-            <!-- 중앙 문제 영역 -->
-            <div id="game-container" class="main-card p-6 transition-all duration-500">
-                <div class="absolute top-6 left-0 w-full text-center">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-1">Guess the Color</p>
-                    <h2 class="text-xl font-black text-slate-800">이 색상은 무엇일까요?</h2>
+            <!-- 카드 영역 -->
+            <div id="game-container" class="main-card">
+                <div id="card-header" class="mb-4 text-center">
+                    <p class="text-slate-400 text-[8px] font-bold uppercase tracking-widest mb-0.5">Guess the Color</p>
+                    <h2 class="text-sm font-black text-slate-800">이 색상은 무엇일까요?</h2>
                 </div>
 
-                <div id="target-color-box" class="w-32 h-32 md:w-44 md:h-44 rounded-2xl shadow-inner border-4 border-slate-50 transition-all duration-500"></div>
+                <div id="target-color-box" class="color-box shadow-inner border-2 border-slate-100"></div>
 
-                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-2xl flex flex-col items-center justify-center p-6 z-30">
-                    <div id="status-badge" class="mb-1 text-2xl font-black italic">PERFECT!</div>
-                    <div id="similarity-text" class="text-slate-400 text-sm font-bold mb-3 italic">유사도: 98.5%</div>
-                    <div id="diff-analysis" class="w-full space-y-2 mb-3 bg-slate-50 p-3 rounded-xl border border-slate-100"></div>
-                    <p id="correct-answer-info" class="text-[10px] font-mono font-bold text-slate-400 uppercase"></p>
+                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-2xl flex flex-col items-center justify-center p-4 z-30">
+                    <div id="status-badge" class="text-xl font-black italic">PERFECT!</div>
+                    <div id="similarity-text" class="text-slate-400 text-xs font-bold mb-2">유사도: 98.5%</div>
+                    <div id="diff-analysis" class="w-full space-y-1 bg-slate-50 p-2 rounded-xl border border-slate-100 mb-2"></div>
+                    <p id="correct-answer-info" class="text-[8px] font-mono font-bold text-slate-300 uppercase"></p>
                 </div>
             </div>
 
-            <!-- 하단 입력 영역 -->
-            <div class="input-area">
+            <!-- 하단 입력창 (키보드 대응을 위해 배치 최적화) -->
+            <div class="input-container">
                 <div class="flex gap-2 items-center">
-                    <div class="flex-1 flex gap-2 bg-white p-2 rounded-xl shadow-xl">
+                    <div class="flex-1 flex gap-1.5 bg-white p-1.5 rounded-xl shadow-2xl border border-white/20">
                         <div id="ui-rgb" class="flex w-full gap-1">
-                            <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full p-4 bg-slate-50 rounded-lg text-center font-black text-xl text-slate-700 focus:bg-blue-50" inputmode="numeric">
-                            <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full p-4 bg-slate-50 rounded-lg text-center font-black text-xl text-slate-700 focus:bg-green-50" inputmode="numeric">
-                            <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full p-4 bg-slate-50 rounded-lg text-center font-black text-xl text-slate-700 focus:bg-blue-50" inputmode="numeric">
+                            <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full py-3 bg-slate-100 rounded-lg text-center font-black text-lg text-slate-700 focus:bg-blue-50" inputmode="numeric">
+                            <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full py-3 bg-slate-100 rounded-lg text-center font-black text-lg text-slate-700 focus:bg-green-50" inputmode="numeric">
+                            <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full py-3 bg-slate-100 rounded-lg text-center font-black text-lg text-slate-700 focus:bg-blue-50" inputmode="numeric">
                         </div>
                         <div id="ui-hex" class="hidden w-full relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 font-black text-xl">#</span>
-                            <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full p-4 pl-10 bg-slate-50 rounded-lg font-mono text-xl uppercase font-black text-slate-700">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 font-black text-lg">#</span>
+                            <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full py-3 pl-8 bg-slate-100 rounded-lg font-mono text-lg uppercase font-black text-slate-700">
                         </div>
                     </div>
 
-                    <button id="action-btn" onclick="handleMainAction()" class="w-16 h-16 shrink-0 bg-[#8c31ff] text-white rounded-xl shadow-lg flex items-center justify-center transition-all active:scale-90">
-                        <svg id="btn-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <button id="action-btn" onclick="handleMainAction()" class="w-14 h-14 shrink-0 bg-[#8c31ff] text-white rounded-xl shadow-lg flex items-center justify-center transition-all active:scale-90">
+                        <svg id="btn-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
                 </div>
 
-                <div class="flex justify-center mt-4 gap-6">
-                    <button onclick="setMode('rgb')" id="mode-btn-rgb" class="text-[10px] font-black tracking-widest text-white uppercase transition-colors">RGB Mode</button>
-                    <button onclick="setMode('hex')" id="mode-btn-hex" class="text-[10px] font-black tracking-widest text-white/40 uppercase transition-colors">Hex Mode</button>
+                <div class="flex justify-center mt-3 gap-6 pb-2">
+                    <button onclick="setMode('rgb')" id="mode-btn-rgb" class="text-[9px] font-black tracking-widest text-white uppercase">RGB Mode</button>
+                    <button onclick="setMode('hex')" id="mode-btn-hex" class="text-[9px] font-black tracking-widest text-white/40 uppercase">Hex Mode</button>
                 </div>
             </div>
         </div>
@@ -171,10 +169,10 @@
 
     <!-- 게임 오버 -->
     <div id="overlay" class="fixed inset-0 bg-slate-900/95 backdrop-blur-xl z-50 flex items-center justify-center hidden p-6">
-        <div class="bg-white rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl">
-            <div class="text-7xl mb-4">😵</div>
-            <h2 class="text-2xl font-black text-slate-900 mb-1 italic uppercase">Game Over</h2>
-            <p id="final-score-msg" class="text-slate-400 font-bold mb-6">Score: 0</p>
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div class="text-6xl mb-4">😵</div>
+            <h2 class="text-xl font-black text-slate-900 mb-1 italic uppercase">Game Over</h2>
+            <p id="final-score-msg" class="text-slate-400 font-bold mb-6 text-sm">Score: 0</p>
             <button onclick="restartGame()" class="w-full bg-[#8c31ff] text-white py-4 rounded-xl font-black text-lg active:scale-95 transition-transform">RETRY</button>
         </div>
     </div>
@@ -203,19 +201,23 @@
         const inputB = document.getElementById('input-b');
         const inputHex = document.getElementById('input-hex');
 
-        // [핵심] 키보드 올라올 때 화면 밀림 방지 스크립트
+        // [핵심] 키보드 높이 감지 및 레이아웃 압축 로직
         const handleVisualViewport = () => {
             const vv = window.visualViewport;
             if (!vv) return;
 
-            // 브라우저가 화면을 밀어올린 만큼(offsetTop) 다시 루트를 아래로 당겨서 고정
-            // 그리고 뷰포트 높이가 줄어든 만큼 컨테이너 높이 조절
+            // 1. 뷰포트 높이 고정 (화면 밀림 방지)
             viewportRoot.style.height = `${vv.height}px`;
             viewportRoot.style.transform = `translateY(${vv.offsetTop}px)`;
             
-            // 모든 형태의 스크롤을 0으로 강제 고정
+            // 2. 키보드가 올라온 상태인지 판단 (전체 화면의 80% 미만으로 줄어들면 키보드 활성으로 간주)
+            if (vv.height < window.innerHeight * 0.85) {
+                document.body.classList.add('keyboard-active');
+            } else {
+                document.body.classList.remove('keyboard-active');
+            }
+
             window.scrollTo(0, 0);
-            document.body.scrollTop = 0;
         };
 
         if (window.visualViewport) {
@@ -223,11 +225,9 @@
             window.visualViewport.addEventListener('scroll', handleVisualViewport);
         }
 
-        // 터치 스크롤 원천 차단
+        // 스크롤 방지
         document.addEventListener('touchmove', (e) => {
-            if (e.target.tagName !== 'INPUT') {
-                e.preventDefault();
-            }
+            if (e.target.tagName !== 'INPUT') e.preventDefault();
         }, { passive: false });
 
         window.addEventListener('load', () => {
@@ -241,24 +241,14 @@
             if (e.key === 'Enter') handleMainAction();
         });
 
-        // 입력 시 자동 이동
-        const handleAutoTab = (e, next) => {
-            if (e.target.value.length >= 3) next.focus();
-        };
-        inputR.addEventListener('input', (e) => handleAutoTab(e, inputG));
-        inputG.addEventListener('input', (e) => handleAutoTab(e, inputB));
-        inputB.addEventListener('input', (e) => handleAutoTab(e, actionBtn));
-
         function setMode(mode) {
             if(isResultState) return;
             currentMode = mode;
             document.getElementById('ui-rgb').classList.toggle('hidden', mode !== 'rgb');
             document.getElementById('ui-hex').classList.toggle('hidden', mode !== 'hex');
             
-            const btnRgb = document.getElementById('mode-btn-rgb');
-            const btnHex = document.getElementById('mode-btn-hex');
-            btnRgb.style.opacity = mode === 'rgb' ? "1" : "0.4";
-            btnHex.style.opacity = mode === 'hex' ? "1" : "0.4";
+            document.getElementById('mode-btn-rgb').style.opacity = mode === 'rgb' ? "1" : "0.4";
+            document.getElementById('mode-btn-hex').style.opacity = mode === 'hex' ? "1" : "0.4";
 
             if(mode === 'rgb') inputR.focus();
             else inputHex.focus();
@@ -333,15 +323,15 @@
             
             if(similarity >= 95) {
                 statusBadge.innerText = "PERFECT!";
-                statusBadge.className = "mb-1 text-2xl font-black italic text-emerald-500";
+                statusBadge.style.color = "#10b981";
                 score += 10;
             } else if(similarity >= 85) {
                 statusBadge.innerText = "GREAT!";
-                statusBadge.className = "mb-1 text-2xl font-black italic text-blue-500";
+                statusBadge.style.color = "#3b82f6";
                 score += 5;
             } else {
                 statusBadge.innerText = "GOOD!";
-                statusBadge.className = "mb-1 text-2xl font-black italic text-amber-500";
+                statusBadge.style.color = "#f59e0b";
                 score += 2;
             }
             scoreDisplay.innerText = score;
@@ -356,11 +346,11 @@
                 const diff = c.user - c.target;
                 const diffText = diff === 0 ? 'MATCH' : (diff > 0 ? `+${diff}` : diff);
                 return `
-                    <div class="flex items-center justify-between font-mono text-[10px]">
+                    <div class="flex items-center justify-between font-mono text-[9px]">
                         <span class="font-black ${c.color}">${c.name}</span>
-                        <div class="flex gap-3">
-                            <span class="text-slate-400 text-[8px]">ANSWER: ${c.target}</span>
-                            <span class="font-bold text-slate-800">${diffText}</span>
+                        <div class="flex gap-2">
+                            <span class="text-slate-300">ANS: ${c.target}</span>
+                            <span class="font-bold text-slate-700">${diffText}</span>
                         </div>
                     </div>
                 `;
@@ -370,7 +360,6 @@
             correctAnswerInfo.innerText = `TARGET HEX: ${targetHex}`;
             btnIcon.innerHTML = `<polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline>`;
             
-            // 결과 확인 시 키보드 닫기 (강제 포커스 해제)
             document.activeElement.blur();
         }
 
