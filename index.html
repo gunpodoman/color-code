@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Pixel Master - Color Guess</title>
+    <title>절대색감</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
@@ -30,7 +30,7 @@
             z-index: -1;
         }
 
-        /* 커다란 원형 그라데이션 패턴 복구 */
+        /* 커다란 원형 그라데이션 패턴 */
         #bg-layer::before {
             content: "";
             position: absolute;
@@ -79,7 +79,6 @@
 
         .main-card {
             background: white;
-            box-shadow: 0 40px 80px rgba(0,0,0,0.5);
             border-radius: 2.5rem;
             width: 88%;
             max-width: 400px;
@@ -92,6 +91,7 @@
             padding: 24px;
             position: relative;
             transition: all 0.3s ease;
+            box-shadow: none;
         }
 
         .color-box {
@@ -100,8 +100,8 @@
             min-height: 140px;
             border-radius: 2rem;
             margin: 12px 0;
-            box-shadow: inset 0 4px 10px rgba(0,0,0,0.1);
             border: 6px solid #f8fafc;
+            box-shadow: none;
         }
 
         .input-area {
@@ -122,6 +122,7 @@
             border: none;
             outline: none !important;
             transition: all 0.2s;
+            box-shadow: none !important;
         }
 
         .btn-gradient {
@@ -159,9 +160,9 @@
                 <div class="w-8 h-8 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
                     <div class="w-4 h-4 bg-white rounded-full"></div>
                 </div>
-                <span class="font-black text-lg tracking-tight uppercase">Pixel Master</span>
+                <span class="font-black text-lg tracking-tight uppercase">절대색감</span>
             </div>
-            <div class="bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-xl border border-white/20 text-white shadow-xl">
+            <div class="bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-xl border border-white/20 text-white">
                 <span class="text-[9px] font-bold opacity-60 mr-2 uppercase">Score</span>
                 <span id="score-display" class="font-black text-base">0</span>
             </div>
@@ -177,11 +178,11 @@
                 <div id="target-color-box" class="color-box"></div>
 
                 <!-- 결과 레이어 -->
-                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[2.5rem] flex flex-col items-center justify-center p-6 z-30 shadow-2xl">
+                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[2.5rem] flex flex-col items-center justify-center p-6 z-30">
                     <div id="status-badge" class="text-3xl font-black italic mb-1 tracking-tighter">GREAT!</div>
                     <div id="similarity-text" class="text-slate-900 font-extrabold text-xl mb-3">유사도: 98.5%</div>
                     
-                    <!-- 정답 분석 영역 (+,- 표시 추가) -->
+                    <!-- 정답 분석 영역 -->
                     <div id="diff-analysis" class="w-full space-y-3 bg-slate-50 p-4 rounded-3xl border border-slate-100 mb-4">
                         <!-- JS에서 동적 생성 -->
                     </div>
@@ -200,14 +201,14 @@
             <!-- 하단 입력창 -->
             <div class="input-area">
                 <div id="ui-rgb" class="flex w-full gap-3">
-                    <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 shadow-2xl focus:ring-4 focus:ring-white/30" inputmode="numeric">
-                    <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 shadow-2xl focus:ring-4 focus:ring-white/30" inputmode="numeric">
-                    <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 shadow-2xl focus:ring-4 focus:ring-white/30" inputmode="numeric">
+                    <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 focus:ring-4 focus:ring-white/30" inputmode="numeric">
+                    <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 focus:ring-4 focus:ring-white/30" inputmode="numeric">
+                    <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 focus:ring-4 focus:ring-white/30" inputmode="numeric">
                 </div>
                 
                 <div id="ui-hex" class="hidden w-full relative">
                     <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-black text-2xl">#</span>
-                    <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full py-5 pl-12 bg-white text-slate-800 rounded-[1.5rem] font-mono text-2xl uppercase font-black shadow-2xl focus:ring-4 focus:ring-white/30">
+                    <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full py-5 pl-12 bg-white text-slate-800 rounded-[1.5rem] font-mono text-2xl uppercase font-black focus:ring-4 focus:ring-white/30">
                 </div>
 
                 <div class="flex justify-center mt-6 gap-10">
@@ -220,11 +221,11 @@
 
     <!-- 게임 오버 -->
     <div id="overlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[1000] flex items-center justify-center hidden p-6">
-        <div class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center shadow-2xl">
+        <div class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center">
             <h2 class="text-3xl font-black text-slate-900 mb-1 italic">GAME OVER</h2>
             <p id="final-score-msg" class="text-indigo-600 font-black mb-6 text-lg">최종 점수: 0점</p>
             <div id="gameover-analysis" class="space-y-2 mb-6 text-left"></div>
-            <button onclick="restartGame()" class="w-full btn-gradient text-white py-5 rounded-[2rem] font-black text-xl shadow-xl active:translate-y-1 border-b-4 border-black/20">RESTART</button>
+            <button onclick="restartGame()" class="w-full btn-gradient text-white py-5 rounded-[2rem] font-black text-xl active:translate-y-1 border-b-4 border-black/20">RESTART</button>
         </div>
     </div>
 
@@ -265,7 +266,6 @@
             window.visualViewport.addEventListener('scroll', syncLayout);
         }
 
-        // 엔터키 조작 핸들러
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 if (overlay.classList.contains('hidden')) {
@@ -342,7 +342,6 @@
             else showResult(similarity, analysisHTML);
         }
 
-        // 분석 HTML 생성 (오차값 표시 추가)
         function generateAnalysisHTML(userRgb) {
             const channels = [
                 { name: 'R', target: targetColor.r, user: userRgb.r, color: 'bg-red-500' },
