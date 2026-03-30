@@ -20,7 +20,6 @@
             z-index: -1;
         }
 
-        /* 보안용 노이즈 레이어 (매크로 방해) */
         #security-noise {
             position: absolute; inset: 0; opacity: 0.04;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -49,7 +48,6 @@
         .main-card {
             background: white; border-radius: 2.5rem; width: 88%; max-width: 400px;
             padding: 28px; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         #target-color-box {
@@ -58,7 +56,6 @@
             overflow: hidden;
         }
 
-        /* 보안 차단막 */
         #anti-capture-overlay {
             position: absolute; inset: 0; background: #0f172a;
             display: none; z-index: 100; justify-content: center; align-items: center;
@@ -74,17 +71,12 @@
 
         .btn-gradient {
             background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
         }
 
-        .diff-tag {
-            font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px;
-        }
-
+        .diff-tag { font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; }
         input { -webkit-appearance: none; outline: none !important; }
         .hidden { display: none !important; }
         
-        /* 애니메이션 */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-in { animation: fadeIn 0.4s ease forwards; }
     </style>
@@ -94,7 +86,6 @@
     <div id="security-noise"></div>
 
     <div id="viewport-root">
-        <!-- 상단 툴바 -->
         <div id="top-toolbar">
             <div class="flex items-center gap-2 text-white logo-clickable" onclick="goHome()">
                 <div class="w-8 h-8 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
@@ -109,7 +100,7 @@
         </div>
 
         <div class="main-stage">
-            <!-- [HOME] 랭킹 화면 -->
+            <!-- [HOME] -->
             <div id="home-view" class="main-card animate-in">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-black text-slate-900 tracking-tighter">RANKING BOARD</h2>
@@ -123,40 +114,30 @@
                 </button>
             </div>
 
-            <!-- [GAME] 게임 화면 -->
+            <!-- [GAME] -->
             <div id="game-view" class="main-card hidden animate-in">
                 <div id="anti-capture-overlay">
-                    <div>
-                        <p class="text-3xl mb-2">🔒</p>
-                        <p>보안을 위해<br>색상이 가려졌습니다</p>
-                    </div>
+                    <div><p class="text-3xl mb-2">🔒</p><p>보안을 위해<br>색상이 가려졌습니다</p></div>
                 </div>
                 <div class="text-center w-full">
                     <p class="text-indigo-500 text-[10px] font-extrabold uppercase tracking-[0.2em] mb-1">Target Color</p>
                     <h2 class="text-lg font-black text-slate-900 leading-tight">이 색은 무엇일까요?</h2>
                 </div>
-                
                 <div id="target-color-box"></div>
                 
-                <!-- 결과 안내 레이어 -->
                 <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[2.5rem] flex flex-col items-center justify-center p-8 z-30">
                     <div id="status-badge" class="text-4xl font-black italic mb-2">GREAT!</div>
                     <div id="similarity-text" class="text-slate-900 font-extrabold text-2xl mb-4">98.5%</div>
-                    
-                    <div id="diff-analysis" class="w-full space-y-3 bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100 mb-6">
-                        <!-- 상세 분석 내용 -->
-                    </div>
-                    
+                    <div id="diff-analysis" class="w-full space-y-3 bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100 mb-6"></div>
                     <p class="text-[10px] font-bold text-indigo-400 animate-bounce uppercase tracking-widest">Next Stage: Press Enter</p>
                 </div>
 
                 <div class="w-full">
                     <div class="flex gap-2">
-                        <input type="number" id="input-r" placeholder="R" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 focus:border-indigo-500 transition-colors" inputmode="numeric">
-                        <input type="number" id="input-g" placeholder="G" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 focus:border-indigo-500 transition-colors" inputmode="numeric">
-                        <input type="number" id="input-b" placeholder="B" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 focus:border-indigo-500 transition-colors" inputmode="numeric">
+                        <input type="number" id="input-r" placeholder="R" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 focus:border-indigo-500" inputmode="numeric">
+                        <input type="number" id="input-g" placeholder="G" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 focus:border-indigo-500" inputmode="numeric">
+                        <input type="number" id="input-b" placeholder="B" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 focus:border-indigo-500" inputmode="numeric">
                     </div>
-                    <p class="text-center text-[9px] font-bold text-slate-300 uppercase mt-4 tracking-widest">Type RGB and Press Enter</p>
                 </div>
             </div>
         </div>
@@ -168,13 +149,17 @@
             <h2 class="text-4xl font-black text-slate-900 italic mb-2">GAME OVER</h2>
             <p id="final-score-msg" class="text-indigo-600 font-black mb-8 text-2xl">0 P</p>
             
-            <div id="rank-register-area" class="mb-8">
-                <p class="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-widest">랭킹에 이름을 등록하세요</p>
+            <div id="rank-register-area" class="mb-8 hidden">
+                <p class="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-widest">Top 5 기록 달성! 이름을 입력하세요</p>
                 <input type="text" id="user-name" maxlength="8" placeholder="NICKNAME" class="w-full py-4 bg-slate-50 rounded-2xl text-center font-black text-xl mb-4 border-2 border-slate-100 focus:border-indigo-500 transition-all">
                 <button onclick="submitScore()" id="submit-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg active:scale-95 transition-transform">REGISTER RANK</button>
             </div>
             
-            <button onclick="goHome()" class="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] hover:text-slate-600 transition-colors">Back to Main Menu</button>
+            <div id="low-score-msg" class="mb-8 hidden">
+                <p class="text-slate-400 font-bold text-sm">기록이 너무 낮아 랭킹에 등록할 수 없습니다.</p>
+            </div>
+            
+            <button onclick="goHome()" class="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] hover:text-slate-600">Back to Main Menu</button>
         </div>
     </div>
 
@@ -184,8 +169,21 @@
         let targetColor = { r: 0, g: 0, b: 0 };
         let score = 0;
         let isResultState = false;
+        let top5Score = 0;
+        let userIpSuffix = "";
 
-        // 보안: 화면 이탈 감지
+        // IP 가져오기 (디시인사이드 스타일)
+        async function fetchIp() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                const parts = data.ip.split('.');
+                userIpSuffix = `(${parts[0]}.${parts[1]})`;
+            } catch(e) {
+                userIpSuffix = "(?.?)";
+            }
+        }
+
         window.addEventListener('blur', () => {
             if(!document.getElementById('game-view').classList.contains('hidden')) {
                 document.getElementById('anti-capture-overlay').style.display = 'flex';
@@ -195,13 +193,23 @@
             document.getElementById('anti-capture-overlay').style.display = 'none';
         });
 
-        window.onload = () => { fetchRankings(); };
+        window.onload = () => { 
+            fetchRankings();
+            fetchIp();
+        };
 
         async function fetchRankings() {
             const listDiv = document.getElementById('ranking-list');
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
+                // 5위 점수 저장 (기록 제한용)
+                if(data.length >= 5) {
+                    top5Score = data[4].score;
+                } else {
+                    top5Score = 0;
+                }
+
                 listDiv.innerHTML = data.map((r, i) => `
                     <div class="rank-item animate-in" style="animation-delay: ${i * 0.05}s">
                         <span><span class="text-indigo-500 mr-2">#${i+1}</span> ${r.name}</span>
@@ -210,7 +218,7 @@
                 `).join('');
                 if(data.length === 0) listDiv.innerHTML = '<p class="text-center text-slate-400 py-20 font-bold">첫 번째 랭커가 되어보세요!</p>';
             } catch(e) {
-                listDiv.innerHTML = '<p class="text-center text-red-400 py-20 font-bold">데이터를 가져오지 못했습니다.</p>';
+                listDiv.innerHTML = '<p class="text-center text-red-400 py-20 font-bold">데이터 로드 실패</p>';
             }
         }
 
@@ -253,11 +261,27 @@
             const similarity = Math.max(0, 100 - (dist / 441.67 * 100));
 
             if(similarity < 75) {
-                document.getElementById('overlay').classList.remove('hidden');
-                document.getElementById('final-score-msg').innerText = `${score} POINTS`;
-                document.getElementById('user-name').focus();
+                gameOver();
             } else {
                 showResult(similarity, r, g, b);
+            }
+        }
+
+        function gameOver() {
+            document.getElementById('overlay').classList.remove('hidden');
+            document.getElementById('final-score-msg').innerText = `${score} POINTS`;
+            
+            const registerArea = document.getElementById('rank-register-area');
+            const lowScoreMsg = document.getElementById('low-score-msg');
+            
+            // 0점 방지 및 Top 5 점수 제한
+            if(score > 0 && score > top5Score) {
+                registerArea.classList.remove('hidden');
+                lowScoreMsg.classList.add('hidden');
+                document.getElementById('user-name').focus();
+            } else {
+                registerArea.classList.add('hidden');
+                lowScoreMsg.classList.remove('hidden');
             }
         }
 
@@ -265,9 +289,7 @@
             isResultState = true;
             const panel = document.getElementById('result-panel');
             panel.classList.remove('hidden');
-            
-            const simText = document.getElementById('similarity-text');
-            simText.innerText = `${sim.toFixed(1)}%`;
+            document.getElementById('similarity-text').innerText = `${sim.toFixed(1)}%`;
             
             const badge = document.getElementById('status-badge');
             if(sim >= 98) { badge.innerText = "PERFECT"; badge.className = "text-4xl font-black italic mb-2 text-emerald-500"; score += 20; }
@@ -285,35 +307,20 @@
 
             document.getElementById('diff-analysis').innerHTML = `
                 <div class="space-y-2">
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black text-slate-400 uppercase">Red Channel</span>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-slate-800">${targetColor.r}</span>
-                            ${getDiffTag(r - targetColor.r)}
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black text-slate-400 uppercase">Green Channel</span>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-slate-800">${targetColor.g}</span>
-                            ${getDiffTag(g - targetColor.g)}
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black text-slate-400 uppercase">Blue Channel</span>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-slate-800">${targetColor.b}</span>
-                            ${getDiffTag(b - targetColor.b)}
-                        </div>
-                    </div>
+                    <div class="flex justify-between items-center"><span class="text-[10px] font-black text-slate-400">RED</span><div class="flex items-center gap-2"><span class="font-bold">${targetColor.r}</span>${getDiffTag(r-targetColor.r)}</div></div>
+                    <div class="flex justify-between items-center"><span class="text-[10px] font-black text-slate-400">GREEN</span><div class="flex items-center gap-2"><span class="font-bold">${targetColor.g}</span>${getDiffTag(g-targetColor.g)}</div></div>
+                    <div class="flex justify-between items-center"><span class="text-[10px] font-black text-slate-400">BLUE</span><div class="flex items-center gap-2"><span class="font-bold">${targetColor.b}</span>${getDiffTag(b-targetColor.b)}</div></div>
                 </div>
             `;
             document.activeElement.blur();
         }
 
         async function submitScore() {
-            const name = document.getElementById('user-name').value.trim();
+            let name = document.getElementById('user-name').value.trim();
             if(!name) return;
+            
+            // 닉네임 + IP 식별자 합치기
+            const fullName = name + " " + userIpSuffix;
             
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
@@ -322,21 +329,25 @@
             try {
                 await fetch(API_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // CORS 정책 대응
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name, score: score })
+                    mode: 'no-cors',
+                    body: JSON.stringify({ name: fullName, score: score })
                 });
-                // no-cors 모드에서는 응답을 읽을 수 없으므로 성공으로 간주하고 이동
                 setTimeout(() => goHome(), 500);
             } catch(e) {
-                console.error(e);
                 btn.disabled = false;
                 btn.innerText = "TRY AGAIN";
             }
         }
 
+        // 키보드 이벤트
         window.addEventListener('keydown', (e) => {
             if(e.key === 'Enter') {
+                // 이름 입력 창에서 엔터 시 등록
+                if(document.activeElement.id === 'user-name') {
+                    submitScore();
+                    return;
+                }
+                // 게임 중 엔터 시 확인/다음
                 if(!document.getElementById('game-view').classList.contains('hidden')) {
                     if(isResultState) generateNewColor();
                     else checkAnswer();
