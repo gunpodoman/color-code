@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>절대색감</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
+        
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background: #1e225e;
+            font-family: 'Pretendard', sans-serif; touch-action: none;
+        }
+
+        #bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1e225e 0%, #2e3192 100%);
+            z-index: -1;
+        }
+
+        #security-noise {
+            position: absolute; inset: 0; opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 5;
+        }
+
+        #viewport-root {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; z-index: 10;
+        }
+
+        #top-toolbar {
+            height: 60px; display: flex; justify-content: space-between;
+            align-items: center; padding: 0 24px; flex-shrink: 0;
+        }
+
+        .logo-clickable { cursor: pointer; transition: transform 0.2s; }
+        .logo-clickable:active { transform: scale(0.95); }
+
+        .main-stage {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 15px;
+            padding: 10px 20px 20px;
+        }
+
+        .main-card {
+            background: white; border-radius: 2.5rem; width: 100%; max-width: 400px;
+            padding: 24px; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        #target-color-box {
+            width: 100%; height: 140px; border-radius: 2rem;
+            margin: 15px 0; border: 8px solid #f1f5f9; position: relative;
+            overflow: hidden;
+        }
+
+        #anti-capture-overlay {
+            position: absolute; inset: 0; background: #0f172a;
+            display: none; z-index: 100; justify-content: center; align-items: center;
+            color: white; font-weight: 800; font-size: 14px; text-align: center;
+            border-radius: 1.5rem;
+        }
+
+        .rank-item {
+            display: flex; justify-content: space-between; padding: 12px 16px;
+            background: #f8fafc; border-radius: 16px; margin-bottom: 8px;
+            font-size: 14px; font-weight: 700; border: 1px solid #f1f5f9;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        }
+
+        /* 액션 버튼 스타일 */
+        #mobile-action-btn {
+            width: 100%; max-width: 400px; padding: 18px 0;
+            border-radius: 1.5rem; color: white; font-weight: 900; font-size: 1.25rem;
+            background: rgba(99, 102, 241, 0.9); backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+            transition: all 0.2s; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        #mobile-action-btn:active { transform: scale(0.95); opacity: 0.8; }
+
+        .diff-tag { font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; }
+        input { -webkit-appearance: none; outline: none !important; }
+        input:focus { border-color: #6366f1 !important; background: #f5f3ff !important; }
+        .hidden { display: none !important; }
+        
+        @keyframes softBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .animate-soft-blink { animation: softBlink 2s ease-in-out infinite; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.4s ease forwards; }
+    </style>
+</head>
+<body>
+    <div id="bg-layer"></div>
+    <div id="security-noise"></div>
+
+    <div id="viewport-root">
+        <div id="top-toolbar">
+            <div class="flex items-center gap-2 text-white logo-clickable" onclick="goHome()">
+                <div class="w-8 h-8 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
+                    <div class="w-4 h-4 bg-white rounded-full"></div>
+                </div>
+                <span class="font-black text-lg tracking-tight uppercase">절대색감</span>
+            </div>
+            <div class="bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-xl border border-white/20 text-white">
+                <span class="text-[9px] font-bold opacity-60 mr-2 uppercase">Score</span>
+                <span id="score-display" class="font-black text-base">0</span>
+            </div>
+        </div>
+
+        <div class="main-stage">
+            <div id="home-view" class="main-card animate-in">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-black text-slate-900 tracking-tighter">RANKING BOARD</h2>
+                    <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em] mt-1">Top 10 Color Masters</p>
+                </div>
+                <div id="ranking-list" class="min-h-[260px] max-h-[300px] overflow-y-auto pr-1">
+                    <p id="rank-loading-text" class="text-center text-slate-400 py-20 font-bold">데이터 로딩 중...</p>
+                </div>
+                <button onclick="startGame()" class="w-full btn-gradient text-white py-5 rounded-[1.5rem] font-black text-xl mt-6 active:scale-95 transition-transform">
+                    START CHALLENGE
+                </button>
+            </div>
+
+            <div id="game-view" class="main-card hidden animate-in">
+                <div id="anti-capture-overlay">
+                    <div><p class="text-3xl mb-2">🔒</p><p>보안을 위해<br>색상이 가려졌습니다</p></div>
+                </div>
+                <div class="text-center w-full">
+                    <p class="text-indigo-500 text-[10px] font-extrabold uppercase tracking-[0.2em] mb-1">Target Color</p>
+                    <h2 class="text-lg font-black text-slate-900 leading-tight">이 색은 무엇일까요?</h2>
+                </div>
+                <div id="target-color-box"></div>
+                
+                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[2.5rem] flex flex-col items-center justify-center p-8 z-30">
+                    <div id="status-badge" class="text-4xl font-black italic mb-2">GREAT!</div>
+                    <div id="similarity-text" class="text-slate-900 font-extrabold text-2xl mb-4">98.5%</div>
+                    <div id="diff-analysis" class="w-full space-y-3 bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100 mb-6"></div>
+                    <p class="text-[10px] font-bold text-indigo-400 animate-soft-blink uppercase tracking-widest">Click Continue to next stage</p>
+                </div>
+
+                <div class="w-full">
+                    <div class="flex gap-2">
+                        <input type="number" id="input-r" placeholder="R" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 transition-all" inputmode="numeric" oninput="handleInput(this, 'input-g')">
+                        <input type="number" id="input-g" placeholder="G" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 transition-all" inputmode="numeric" oninput="handleInput(this, 'input-b')">
+                        <input type="number" id="input-b" placeholder="B" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 transition-all" inputmode="numeric" oninput="handleInput(this, null)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 모바일 전용 액션 버튼 -->
+            <button id="mobile-action-btn" class="hidden animate-in" onclick="handleActionButton()">
+                CHECK
+            </button>
+        </div>
+    </div>
+
+    <div id="overlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[1000] flex items-center justify-center hidden p-6">
+        <div class="bg-white rounded-[3rem] p-10 max-w-sm w-full text-center shadow-2xl">
+            <h2 class="text-4xl font-black text-slate-900 italic mb-2">GAME OVER</h2>
+            <p id="final-score-msg" class="text-indigo-600 font-black mb-8 text-2xl">0 P</p>
+            
+            <div id="rank-register-area" class="mb-8 hidden">
+                <p class="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-widest">Top 5 기록 달성! 이름을 입력하세요</p>
+                <input type="text" id="user-name" maxlength="8" placeholder="NICKNAME" class="w-full py-4 bg-slate-50 rounded-2xl text-center font-black text-xl mb-4 border-2 border-slate-100 focus:border-indigo-500 transition-all">
+                <button onclick="submitScore()" id="submit-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg active:scale-95 transition-transform">REGISTER RANK</button>
+            </div>
+            
+            <div id="low-score-msg" class="mb-8 hidden">
+                <p class="text-slate-400 font-bold text-sm mb-2">기록이 너무 낮아 랭킹에 등록할 수 없습니다.</p>
+                <button onclick="startGame()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg mb-4 active:scale-95 transition-transform">RESTART</button>
+            </div>
+            
+            <button onclick="goHome()" class="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] hover:text-slate-600">Back to Main Menu</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbxlDOHpgNjYSszvAGzc7_Vw7sS7E5bknkVvhhCQn8bGgpUkqoNgCRmSyIPYDG0r63-4Vg/exec";
+        
+        let targetColor = { r: 0, g: 0, b: 0 };
+        let score = 0;
+        let isResultState = false;
+        let top5Score = 0;
+        let userIpSuffix = "";
+        let rankingUpdateInterval = null;
+        let isFirstLoad = true;
+
+        async function fetchIp() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                const parts = data.ip.split('.');
+                userIpSuffix = `(${parts[0]}.${parts[1]})`;
+            } catch(e) { userIpSuffix = "(?.?)"; }
+        }
+
+        window.addEventListener('blur', () => {
+            if(!document.getElementById('game-view').classList.contains('hidden')) {
+                document.getElementById('anti-capture-overlay').style.display = 'flex';
+            }
+        });
+        window.addEventListener('focus', () => {
+            document.getElementById('anti-capture-overlay').style.display = 'none';
+        });
+
+        window.onload = () => { 
+            fetchRankings();
+            fetchIp();
+            rankingUpdateInterval = setInterval(() => {
+                if(!document.getElementById('home-view').classList.contains('hidden')) {
+                    fetchRankings();
+                }
+            }, 5000);
+        };
+
+        async function fetchRankings() {
+            const listDiv = document.getElementById('ranking-list');
+            try {
+                const res = await fetch(API_URL);
+                const data = await res.json();
+                
+                if(data.length >= 5) top5Score = data[4].score;
+                else top5Score = 0;
+
+                const newListHtml = data.map((r, i) => {
+                    const aniClass = isFirstLoad ? 'animate-in' : '';
+                    const aniDelay = isFirstLoad ? `style="animation-delay: ${i * 0.05}s"` : '';
+                    return `
+                        <div class="rank-item ${aniClass}" ${aniDelay}>
+                            <span><span class="text-indigo-500 mr-2">#${i+1}</span> ${r.name}</span>
+                            <span class="text-slate-400 font-black">${r.score}</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                const loadingText = document.getElementById('rank-loading-text');
+                if(loadingText) loadingText.remove();
+                
+                listDiv.innerHTML = newListHtml;
+                if(data.length === 0) listDiv.innerHTML = '<p class="text-center text-slate-400 py-20 font-bold">첫 번째 랭커가 되어보세요!</p>';
+                
+                isFirstLoad = false;
+            } catch(e) { console.error("랭킹 로드 오류"); }
+        }
+
+        function startGame() {
+            score = 0;
+            document.getElementById('score-display').innerText = "0";
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('overlay').classList.add('hidden');
+            document.getElementById('game-view').classList.remove('hidden');
+            document.getElementById('mobile-action-btn').classList.remove('hidden');
+            generateNewColor();
+        }
+
+        function goHome() {
+            document.getElementById('overlay').classList.add('hidden');
+            document.getElementById('game-view').classList.add('hidden');
+            document.getElementById('mobile-action-btn').classList.add('hidden');
+            document.getElementById('home-view').classList.remove('hidden');
+            fetchRankings();
+        }
+
+        function generateNewColor() {
+            isResultState = false;
+            targetColor = { 
+                r: Math.floor(Math.random()*256), 
+                g: Math.floor(Math.random()*256), 
+                b: Math.floor(Math.random()*256) 
+            };
+            document.getElementById('target-color-box').style.backgroundColor = `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`;
+            document.getElementById('result-panel').classList.add('hidden');
+            document.getElementById('mobile-action-btn').innerText = "CHECK";
+            document.getElementById('input-r').value = ''; 
+            document.getElementById('input-g').value = ''; 
+            document.getElementById('input-b').value = '';
+            document.getElementById('input-r').focus();
+        }
+
+        // 입력 헬퍼: 3글자 입력 시 다음 칸 이동
+        function handleInput(el, nextId) {
+            if(el.value.length >= 3) {
+                if(parseInt(el.value) > 255) el.value = "255";
+                if(nextId) document.getElementById(nextId).focus();
+            }
+        }
+
+        // 모바일 액션 버튼 핸들러
+        function handleActionButton() {
+            if(isResultState) {
+                generateNewColor();
+            } else {
+                checkAnswer();
+            }
+        }
+
+        function checkAnswer() {
+            const r = parseInt(document.getElementById('input-r').value) || 0;
+            const g = parseInt(document.getElementById('input-g').value) || 0;
+            const b = parseInt(document.getElementById('input-b').value) || 0;
+
+            const dist = Math.sqrt(Math.pow(targetColor.r-r,2) + Math.pow(targetColor.g-g,2) + Math.pow(targetColor.b-b,2));
+            const similarity = Math.max(0, 100 - (dist / 441.67 * 100));
+
+            if(similarity < 75) gameOver();
+            else showResult(similarity, r, g, b);
+        }
+
+        function gameOver() {
+            document.getElementById('overlay').classList.remove('hidden');
+            document.getElementById('final-score-msg').innerText = `${score} POINTS`;
+            
+            const registerArea = document.getElementById('rank-register-area');
+            const lowScoreMsg = document.getElementById('low-score-msg');
+            
+            if(score > 0 && score > top5Score) {
+                registerArea.classList.remove('hidden');
+                lowScoreMsg.classList.add('hidden');
+                document.getElementById('user-name').focus();
+            } else {
+                registerArea.classList.add('hidden');
+                lowScoreMsg.classList.remove('hidden');
+            }
+            document.getElementById('mobile-action-btn').classList.add('hidden');
+        }
+
+        function showResult(sim, r, g, b) {
+            isResultState = true;
+            const panel = document.getElementById('result-panel');
+            panel.classList.remove('hidden');
+            document.getElementById('similarity-text').innerText = `${sim.toFixed(1)}%`;
+            document.getElementById('mobile-action-btn').innerText = "CONTINUE";
+            
+            const badge = document.getElementById('status-badge');
+            if(sim >= 98) { badge.innerText = "PERFECT"; badge.className = "text-4xl font-black italic mb-2 text-emerald-500"; score += 20; }
+            else if(sim >= 93) { badge.innerText = "GREAT"; badge.className = "text-4xl font-black italic mb-2 text-indigo-500"; score += 10; }
+            else if(sim >= 85) { badge.innerText = "GOOD"; badge.className = "text-4xl font-black italic mb-2 text-blue-500"; score += 5; }
+            else { badge.innerText = "SO SO"; badge.className = "text-4xl font-black italic mb-2 text-amber-500"; score += 2; }
+            
+            document.getElementById('score-display').innerText = score;
+
+            const getDiffTag = (v) => {
+                if(v > 0) return `<span class="diff-tag bg-red-100 text-red-600">+${v}</span>`;
+                if(v < 0) return `<span class="diff-tag bg-blue-100 text-blue-600">${v}</span>`;
+                return `<span class="diff-tag bg-slate-100 text-slate-400">0</span>`;
+            };
+
+            document.getElementById('diff-analysis').innerHTML = `
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center"><span class="text-[10px] font-black text-slate-400">RED</span><div class="flex items-center gap-2"><span class="font-bold">${targetColor.r}</span>${getDiffTag(r-targetColor.r)}</div></div>
+                    <div class="flex justify-between items-center"><span class="text-[10px] font-black text-slate-400">GREEN</span><div class="flex items-center gap-2"><span class="font-bold">${targetColor.g}</span>${getDiffTag(g-targetColor.g)}</div></div>
+                    <div class="flex justify-between items-center"><span class="text-[10px] font-black text-slate-400">BLUE</span><div class="flex items-center gap-2"><span class="font-bold">${targetColor.b}</span>${getDiffTag(b-targetColor.b)}</div></div>
+                </div>
+            `;
+            document.activeElement.blur();
+        }
+
+        async function submitScore() {
+            let name = document.getElementById('user-name').value.trim();
+            if(!name) return;
+            
+            const fullName = name + " " + userIpSuffix;
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerText = "SAVING...";
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ name: fullName, score: score })
+                });
+                setTimeout(() => {
+                    isFirstLoad = false;
+                    fetchRankings(); 
+                    goHome();
+                }, 800);
+            } catch(e) {
+                btn.disabled = false;
+                btn.innerText = "TRY AGAIN";
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') {
+                if(!document.getElementById('overlay').classList.contains('hidden')) {
+                    const registerArea = document.getElementById('rank-register-area');
+                    if(!registerArea.classList.contains('hidden')) {
+                        if(document.activeElement.id === 'user-name') submitScore();
+                    } else {
+                        startGame();
+                    }
+                    return;
+                }
+                if(!document.getElementById('game-view').classList.contains('hidden')) {
+                    handleActionButton();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
