@@ -189,9 +189,12 @@
         let score = 0;
         let isResultState = false;
         let isFailed = false;
-        let lastColorTime = 0;
         let isCheater = false;
-        let fastAccurateStreak = 0; // 추가: 초인적 속도+정확도 연속 달성 횟수
+        
+        // --- 새로 추가된 명시적 시간 측정 변수 ---
+        let questionStartTime = 0; 
+        let submitTime = 0;
+        let fastAccurateStreak = 0; 
 
         function setCookie(name, value, days) {
             let expires = "";
@@ -300,7 +303,10 @@
             isResultState = false;
             isFailed = false;
             inputLogs = [];
-            isCheater = false;
+            
+            // 주의: isCheater는 한 번 true가 되면 게임오버 후 
+            // 메인화면에서 '다시 시작'을 누르기 전까지 절대 초기화되지 않음!
+            
             const r = Math.floor(Math.random() * 256);
             const g = Math.floor(Math.random() * 256);
             const b = Math.floor(Math.random() * 256);
@@ -322,7 +328,8 @@
                 else document.getElementById('input-hex').focus();
             }, 100);
             
-            lastColorTime = Date.now();
+            // [핵심 개선] 문제가 출제되는 정확한 시점의 시간을 밀리초 단위로 저장
+            questionStartTime = new Date().getTime();
         }
 
         function handleRgbInput(el, nextId) {
@@ -344,8 +351,14 @@
             else checkAnswer();
         }
 
-        // ---------- 극도로 단순하고 강력한 '결과 기반' 핵 탐지 ----------
+        // ---------- 시간 기록 비교를 통한 정확한 결과 기반 핵 탐지 ----------
         function checkAnswer() {
+            // [핵심 개선] 제출 버튼(또는 엔터)을 누른 정확한 시점의 시간을 저장
+            submitTime = new Date().getTime();
+            
+            // [핵심 개선] 제출 시간 - 출제 시간 = 걸린 시간 (밀리초) 계산
+            const timeTaken = submitTime - questionStartTime;
+
             let userRgb;
             if(currentMode === 'RGB') {
                 userRgb = {
@@ -360,18 +373,18 @@
             const dist = Math.sqrt(Math.pow(targetColor.r-userRgb.r,2)+Math.pow(targetColor.g-userRgb.g,2)+Math.pow(targetColor.b-userRgb.b,2));
             const similarity = Math.max(0, 100 - (dist / 441.67 * 100));
 
-            const now = Date.now();
-            const timeDiff = now - lastColorTime;
-            
-            // 핵심 방어 로직: 3초(3000ms) 이내에 & 정확도 85% 이상을 입력한 경우
-            if (timeDiff <= 3000 && similarity >= 85) {
+            // 핵 검증 로직: 매크로의 고의적인 딜레이까지 잡아내기 위해 한계 시간을 5초(5000ms)로 넉넉하게 확장
+            if (timeTaken <= 5000 && similarity >= 85) {
                 fastAccurateStreak++;
-                // 인간의 한계를 뛰어넘은 퍼포먼스가 한 판에 3번 연속 발생하면 핵으로 낙인
+                console.log(`[시스템] 비정상적 속도 감지 - 걸린시간: ${timeTaken}ms, 정확도: ${similarity.toFixed(1)}%, 연속: ${fastAccurateStreak}회`);
+                
+                // 인간의 한계를 뛰어넘은 퍼포먼스가 3번 연속 발생하면 핵으로 낙인
                 if (fastAccurateStreak >= 3) {
                     isCheater = true;
+                    console.log(`[핵 판정] 이 기기는 매크로를 사용 중입니다 (isCheater = true)`);
                 }
             } else {
-                // 한 번이라도 고민하느라 3초를 넘기거나, 인간적인 오차(85% 미만)가 발생하면 스택 초기화
+                // 시간이 오래 걸리거나 정확도가 낮으면 스택 초기화
                 fastAccurateStreak = 0;
             }
 
