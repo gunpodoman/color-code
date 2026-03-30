@@ -80,7 +80,6 @@
     </div>
 
     <div id="viewport-root" class="fixed inset-0 flex flex-col items-center">
-        <!-- 상단 툴바 -->
         <header class="w-full max-w-[400px] h-[70px] flex justify-between items-center px-6 mt-2">
             <div class="flex items-center gap-3 text-white cursor-pointer" onclick="location.reload()">
                 <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -94,7 +93,6 @@
         </header>
 
         <main class="flex-1 flex flex-col items-center justify-center w-full p-4">
-            <!-- 메인 홈 -->
             <div id="home-view" class="main-card">
                 <div class="text-center mb-8">
                     <h2 class="text-2xl font-black text-slate-900 tracking-tight">RANKING</h2>
@@ -113,9 +111,7 @@
                 </button>
             </div>
 
-            <!-- 게임 화면 -->
             <div id="game-view" class="main-card hidden">
-                <!-- 퀴즈 UI -->
                 <div id="quiz-content" class="w-full">
                     <div class="mode-switch-container">
                         <button id="mode-rgb-btn" onclick="setMode('RGB')" class="mode-btn active">RGB MODE</button>
@@ -137,20 +133,16 @@
                     </div>
                 </div>
                 
-                <!-- 통합된 결과창 및 게임오버 UI -->
                 <div id="result-panel" class="hidden w-full flex-col items-center justify-center py-4">
                     <div id="status-badge" class="text-4xl font-black italic mb-1 text-indigo-600 tracking-tighter">GREAT!</div>
                     <div id="similarity-text" class="text-slate-900 font-black text-5xl mb-3">0%</div>
                     
-                    <!-- 게임 오버 시에만 보이는 최종 점수 -->
                     <div id="game-over-score" class="hidden text-indigo-600 font-black mb-6 text-2xl">0 PTS</div>
 
                     <div id="diff-analysis" class="w-full space-y-3 mb-6 bg-slate-50 p-5 rounded-2xl border border-slate-100 font-bold text-xs text-slate-500"></div>
                     
-                    <!-- 정답 맞췄을 때 진행 안내 -->
                     <p id="continue-hint" class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] animate-pulse mb-2 mt-4">Tap to Continue</p>
                     
-                    <!-- 게임 오버 시에만 나타나는 액션 영역 -->
                     <div id="game-over-actions" class="hidden w-full flex-col gap-3 mt-2">
                         <button id="btn-register-popup" onclick="openRegisterPopup()" class="hidden w-full bg-slate-900 hover:bg-black text-white py-4 rounded-xl font-black text-lg shadow-lg transition-colors">랭킹 등록하기</button>
                         <button onclick="startGame()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-black text-lg shadow-lg transition-colors">다시 도전</button>
@@ -165,7 +157,6 @@
         </main>
     </div>
 
-    <!-- 랭킹 등록 다크 팝업 -->
     <div id="register-popup" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex-col items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-[2rem] p-8 w-full max-w-[340px] flex flex-col items-center shadow-2xl transform transition-all">
             <div class="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mb-4">
@@ -191,7 +182,6 @@
         let isFailed = false;
         let isCheater = false;
         
-        // --- 새로 추가된 명시적 시간 측정 변수 ---
         let questionStartTime = 0; 
         let submitTime = 0;
         let fastAccurateStreak = 0; 
@@ -289,8 +279,9 @@
         }
 
         function startGame() {
+            if (isCheater) return;
             score = 0;
-            fastAccurateStreak = 0; // 게임 시작 시 콤보 초기화
+            fastAccurateStreak = 0;
             isCheater = false;
             document.getElementById('score-display').innerText = "0";
             document.getElementById('home-view').classList.add('hidden');
@@ -302,10 +293,6 @@
         function generateNewColor() {
             isResultState = false;
             isFailed = false;
-            inputLogs = [];
-            
-            // 주의: isCheater는 한 번 true가 되면 게임오버 후 
-            // 메인화면에서 '다시 시작'을 누르기 전까지 절대 초기화되지 않음!
             
             const r = Math.floor(Math.random() * 256);
             const g = Math.floor(Math.random() * 256);
@@ -328,35 +315,43 @@
                 else document.getElementById('input-hex').focus();
             }, 100);
             
-            // [핵심 개선] 문제가 출제되는 정확한 시점의 시간을 밀리초 단위로 저장
             questionStartTime = new Date().getTime();
         }
 
         function handleRgbInput(el, nextId) {
-            inputLogs.push({ t: Date.now(), v: el.value });
             if(el.value.length >= 3) {
                 if(parseInt(el.value) > 255) el.value = "255";
                 if(nextId) document.getElementById(nextId).focus();
             }
         }
 
-        document.getElementById('input-hex').addEventListener('input', (e) => {
-            inputLogs.push({ t: Date.now(), v: e.target.value });
-        });
-
         function handleActionButton() {
+            if (isCheater) return;
             if(isResultState) {
                 if(!isFailed) generateNewColor();
             }
             else checkAnswer();
         }
 
-        // ---------- 시간 기록 비교를 통한 정확한 결과 기반 핵 탐지 ----------
-        function checkAnswer() {
-            // [핵심 개선] 제출 버튼(또는 엔터)을 누른 정확한 시점의 시간을 저장
-            submitTime = new Date().getTime();
+        // [새로 추가된 함수] 매크로 감지 시 즉각 서버로 보고 후 화면을 차단합니다.
+        function forceBan() {
+            console.log(`[강제 제재] 매크로 감지되어 서버로 전송합니다.`);
+            // 화면 즉시 차단
+            document.getElementById('ban-overlay').style.display = 'flex';
+            document.getElementById('device-info-display').innerText = `DEVICE ID: ${deviceId}\n[실시간 매크로 감지됨]`;
             
-            // [핵심 개선] 제출 시간 - 출제 시간 = 걸린 시간 (밀리초) 계산
+            // 백그라운드에서 조용히 서버에 데이터 전송 (이름은 BANNED_MACRO로 강제 지정)
+            fetch(API_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify({ name: "BANNED_MACRO", score: score, device: deviceId, is_cheater: true }) 
+            });
+        }
+
+        function checkAnswer() {
+            if (isCheater) return; // 이미 핵 판정 시 로직 정지
+            
+            submitTime = new Date().getTime();
             const timeTaken = submitTime - questionStartTime;
 
             let userRgb;
@@ -373,25 +368,20 @@
             const dist = Math.sqrt(Math.pow(targetColor.r-userRgb.r,2)+Math.pow(targetColor.g-userRgb.g,2)+Math.pow(targetColor.b-userRgb.b,2));
             const similarity = Math.max(0, 100 - (dist / 441.67 * 100));
 
-            // 핵 검증 로직: 매크로의 고의적인 딜레이까지 잡아내기 위해 한계 시간을 5초(5000ms)로 넉넉하게 확장
+            // 핵 검증 로직
             if (timeTaken <= 5000 && similarity >= 85) {
                 fastAccurateStreak++;
-                console.log(`[시스템] 비정상적 속도 감지 - 걸린시간: ${timeTaken}ms, 정확도: ${similarity.toFixed(1)}%, 연속: ${fastAccurateStreak}회`);
-                
-                // 인간의 한계를 뛰어넘은 퍼포먼스가 3번 연속 발생하면 핵으로 낙인
                 if (fastAccurateStreak >= 3) {
                     isCheater = true;
-                    console.log(`[핵 판정] 이 기기는 매크로를 사용 중입니다 (isCheater = true)`);
+                    forceBan(); // [수정됨] 3스택이 쌓이면 즉시 차단 및 서버 전송 실행
+                    return;     // 아래의 결과보기 로직(showResult)을 아예 실행하지 않음
                 }
             } else {
-                // 시간이 오래 걸리거나 정확도가 낮으면 스택 초기화
                 fastAccurateStreak = 0;
             }
 
-            // 성공 판정 기준 (70% 이상)
             showResult(similarity, userRgb, similarity < 70);
         }
-        // -------------------------------------------------------------------
 
         function createGaugeHTML(label, target, user, bgClass) {
             const diff = user - target;
@@ -571,6 +561,8 @@
         };
 
         window.addEventListener('keydown', (e) => { 
+            if (isCheater) return; // [보안 추가] 매크로가 엔터키를 무한 입력하는 것을 방지
+            
             if(e.key === 'Enter') {
                 const popup = document.getElementById('register-popup');
                 if (!popup.classList.contains('hidden')) {
