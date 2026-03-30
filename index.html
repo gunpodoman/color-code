@@ -190,8 +190,8 @@
         let isResultState = false;
         let isFailed = false;
         let lastColorTime = 0;
-        let inputLogs = [];
         let isCheater = false;
+        let fastAccurateStreak = 0; // 추가: 초인적 속도+정확도 연속 달성 횟수
 
         function setCookie(name, value, days) {
             let expires = "";
@@ -287,6 +287,8 @@
 
         function startGame() {
             score = 0;
+            fastAccurateStreak = 0; // 게임 시작 시 콤보 초기화
+            isCheater = false;
             document.getElementById('score-display').innerText = "0";
             document.getElementById('home-view').classList.add('hidden');
             document.getElementById('game-view').classList.remove('hidden');
@@ -342,7 +344,7 @@
             else checkAnswer();
         }
 
-        // ---------- 극한으로 강화된 핵 탐지 로직이 포함된 checkAnswer ----------
+        // ---------- 극도로 단순하고 강력한 '결과 기반' 핵 탐지 ----------
         function checkAnswer() {
             let userRgb;
             if(currentMode === 'RGB') {
@@ -361,31 +363,16 @@
             const now = Date.now();
             const timeDiff = now - lastColorTime;
             
-            // [핵 방어 1] 초인적 반응 속도 (0.8초 이내는 무조건 기계)
-            if(timeDiff < 800) isCheater = true;
-            
-            // [핵 방어 2] 물리적 타이핑(input 이벤트) 기록이 아예 없는데 고득점 (스크립트 봇이 DOM 강제 조작)
-            if(similarity >= 70 && inputLogs.length === 0) isCheater = true;
-
-            // [핵 방어 3] 키보드 매크로 탐지 (타이핑 간격이 비정상적으로 일정함)
-            if(inputLogs.length >= 3) {
-                const intervals = [];
-                for(let i=1; i<inputLogs.length; i++) intervals.push(inputLogs[i].t - inputLogs[i-1].t);
-                const avg = intervals.reduce((a,b)=>a+b, 0) / Math.max(1, intervals.length);
-                const variance = intervals.reduce((a,b)=>a+Math.pow(b-avg,2), 0) / Math.max(1, intervals.length);
-                if(variance < 5) isCheater = true; // 인간은 분산이 5 미만으로 나올 수 없음
-            }
-
-            // [핵 방어 4 - 헥스(HEX) 집중 방어]
-            // 핵 프로그램이 HEX 입력창에 단 1번 복붙(또는 값 주입)하고 1.5초 이내에 제출하는 패턴 차단
-            if(currentMode === 'HEX' && inputLogs.length <= 1 && timeDiff < 1500) {
-                isCheater = true;
-            }
-
-            // [핵 방어 5 - RGB 방어]
-            // R, G, B 칸을 다 채우려면 최소 3번의 이벤트가 발생해야 함. 그 미만인데 고득점이면 차단
-            if(currentMode === 'RGB' && similarity >= 70 && inputLogs.length < 3) {
-                isCheater = true;
+            // 핵심 방어 로직: 3초(3000ms) 이내에 & 정확도 85% 이상을 입력한 경우
+            if (timeDiff <= 3000 && similarity >= 85) {
+                fastAccurateStreak++;
+                // 인간의 한계를 뛰어넘은 퍼포먼스가 한 판에 3번 연속 발생하면 핵으로 낙인
+                if (fastAccurateStreak >= 3) {
+                    isCheater = true;
+                }
+            } else {
+                // 한 번이라도 고민하느라 3초를 넘기거나, 인간적인 오차(85% 미만)가 발생하면 스택 초기화
+                fastAccurateStreak = 0;
             }
 
             // 성공 판정 기준 (70% 이상)
