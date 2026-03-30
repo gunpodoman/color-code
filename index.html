@@ -48,11 +48,11 @@
         }
         .mode-btn.active { background: white; color: #4f46e5; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        input { 
+        .game-input { 
             outline: none !important; transition: all 0.2s ease;
             background: #f8fafc; border: 2px solid #e2e8f0;
         }
-        input:focus { border-color: #4f46e5; background: white; }
+        .game-input:focus { border-color: #4f46e5; background: white; }
 
         .btn-primary {
             background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
@@ -127,13 +127,13 @@
                     
                     <div id="input-container" class="mt-4">
                         <div id="input-area-rgb" class="grid grid-cols-3 gap-2">
-                            <input type="number" id="input-r" placeholder="R" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, 'input-g')">
-                            <input type="number" id="input-g" placeholder="G" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, 'input-b')">
-                            <input type="number" id="input-b" placeholder="B" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, null)">
+                            <input type="number" id="input-r" placeholder="R" class="w-full py-5 rounded-2xl text-center font-black text-2xl game-input" oninput="handleRgbInput(this, 'input-g')">
+                            <input type="number" id="input-g" placeholder="G" class="w-full py-5 rounded-2xl text-center font-black text-2xl game-input" oninput="handleRgbInput(this, 'input-b')">
+                            <input type="number" id="input-b" placeholder="B" class="w-full py-5 rounded-2xl text-center font-black text-2xl game-input" oninput="handleRgbInput(this, null)">
                         </div>
                         <div id="input-area-hex" class="hidden relative">
                             <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-black text-2xl">#</span>
-                            <input type="text" id="input-hex" maxlength="6" placeholder="HEX CODE" class="w-full py-5 pl-14 rounded-2xl font-black text-2xl tracking-widest uppercase">
+                            <input type="text" id="input-hex" maxlength="6" placeholder="HEX CODE" class="w-full py-5 pl-14 rounded-2xl font-black text-2xl tracking-widest uppercase game-input">
                         </div>
                     </div>
                 </div>
@@ -177,10 +177,10 @@
             <h3 class="text-white font-black text-2xl mb-1 tracking-tight">NEW RECORD</h3>
             <p class="text-indigo-400 font-bold mb-6 text-sm">최종 기록: <span id="popup-score" class="text-white text-lg ml-1">0</span> PTS</p>
             
-            <input type="text" id="user-name" maxlength="10" placeholder="NICKNAME" class="w-full py-4 bg-slate-800 text-white rounded-xl text-center font-black text-lg border-2 border-slate-700 focus:border-indigo-500 transition-colors mb-4 placeholder-slate-500 outline-none">
+            <input type="text" id="user-name" maxlength="10" placeholder="NICKNAME" class="w-full py-4 bg-slate-800 text-white rounded-xl text-center font-black text-lg border-2 border-slate-700 focus:border-indigo-500 focus:bg-slate-900 transition-colors mb-4 placeholder-slate-500 outline-none">
             
             <button onclick="submitScore()" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-black text-lg shadow-lg transition-colors mb-3">등록하기</button>
-            <button onclick="closeRegisterPopup()" class="text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:text-white transition-colors p-3">취소하고 메인으로</button>
+            <button id="cancel-btn" onclick="closeRegisterPopup()" class="text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:text-white transition-colors p-3">취소하고 메인으로</button>
         </div>
     </div>
 
@@ -196,15 +196,68 @@
         let inputLogs = [];
         let isCheater = false;
 
-        // localStorage를 활용하여 기기 고유 ID 고정 (아이패드 등 핑거프린트 변경 방지)
-        function getOrCreateDeviceId() {
-            let id = localStorage.getItem('absolute_color_device_id');
-            if (!id) {
-                // 새로운 랜덤 ID 생성
-                const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
-                id = "DVC-" + randomPart;
-                localStorage.setItem('absolute_color_device_id', id);
+        // 쿠키 설정 함수 (localStorage 초기화 대비)
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                let date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
             }
+            document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+        }
+
+        // 쿠키 가져오기 함수
+        function getCookie(name) {
+            let nameEQ = name + "=";
+            let ca = document.cookie.split(';');
+            for(let i=0;i < ca.length;i++) {
+                let c = ca[i];
+                while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+            }
+            return null;
+        }
+
+        // 기기 환경 핑거프린트 생성 (브라우저 정보 기반 고유 해시 - 랜덤값 제거, 정확도 극대화)
+        function generateFingerprint() {
+            const screenW = Math.max(screen.width, screen.height);
+            const screenH = Math.min(screen.width, screen.height);
+            // WebGL 렌더러 정보를 가져와서 기기 식별력 강화
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            let renderer = '';
+            if (gl) {
+                const ext = gl.getExtension('WEBGL_debug_renderer_info');
+                if (ext) renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+            }
+            // 변동성이 높은 userAgent 제외, 고정 하드웨어 정보만 조합
+            const fp = navigator.platform + "-" + navigator.language + "-" + screenW + "x" + screenH + "-" + (navigator.hardwareConcurrency || '') + "-" + renderer;
+            let hash = 0;
+            for (let i = 0; i < fp.length; i++) {
+                hash = ((hash << 5) - hash) + fp.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash).toString(36).toUpperCase();
+        }
+
+        // 강력한 기기 고유 ID 생성/유지 함수 (LocalStorage + Cookie + Fingerprint)
+        function getOrCreateDeviceId() {
+            let id = null;
+            try { id = localStorage.getItem('absolute_color_device_id'); } catch(e) {}
+            if (!id) id = getCookie('absolute_color_device_id');
+            
+            // 기기 고유 해시로만 ID 생성 (랜덤 난수 제거하여 캐시 삭제 시에도 동일 ID 완전 복구)
+            const expectedId = "DVC-" + generateFingerprint();
+            
+            if (!id || id !== expectedId) {
+                id = expectedId;
+            }
+            
+            // 항상 두 곳 모두에 최신/동일 값 저장 시도 (유실 방지)
+            try { localStorage.setItem('absolute_color_device_id', id); } catch(e) {}
+            setCookie('absolute_color_device_id', id, 365);
+            
             return id;
         }
         const deviceId = getOrCreateDeviceId();
@@ -398,8 +451,8 @@
                 
                 if(score > 0) { 
                     btnReg.classList.remove('hidden'); 
-                    // 0.6초 뒤에 랭킹 등록 다크 팝업 자동 호출
-                    setTimeout(() => openRegisterPopup(), 600);
+                    // 결과창을 볼 필요 없이 즉시 랭킹 등록 다크 팝업 자동 호출
+                    openRegisterPopup();
                 } else { 
                     btnReg.classList.add('hidden'); 
                 }
@@ -434,21 +487,60 @@
             const popup = document.getElementById('register-popup');
             popup.classList.add('hidden');
             popup.classList.remove('flex');
+            
+            // 취소 시 즉시 메인 화면으로 돌아가기
+            if (isFailed) {
+                document.getElementById('game-view').classList.add('hidden');
+                document.getElementById('home-view').classList.remove('hidden');
+                document.getElementById('score-display').innerText = "0";
+                score = 0;
+            }
         }
 
         async function submitScore() {
             const name = document.getElementById('user-name').value.trim();
             if(!name) return;
+            
             const btn = document.getElementById('submit-btn');
-            btn.disabled = true; btn.innerText = "기록 중...";
-            try {
-                await fetch(API_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    body: JSON.stringify({ name, score, device: deviceId, is_cheater: isCheater }) 
-                });
-                location.reload();
-            } catch(e) { btn.disabled = false; btn.innerText = "다시 시도"; }
+            const cancelBtn = document.getElementById('cancel-btn');
+            
+            // 중복 클릭 방지를 위해 즉시 버튼 비활성화
+            btn.disabled = true; 
+            btn.innerText = "기록 중...";
+            if (cancelBtn) cancelBtn.disabled = true;
+
+            // 새로고침으로 인한 지연을 없애기 위해 Background API 호출 (Fire and Forget)
+            fetch(API_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify({ name, score, device: deviceId, is_cheater: isCheater }) 
+            }).then(() => {
+                fetchRankings(); // 전송 성공 시 조용히 랭킹만 갱신
+            }).catch(() => {});
+
+            // 전송을 기다리지 않고 즉각적으로 메인 화면으로 전환 (UX 속도 극대화)
+            setTimeout(() => {
+                closeRegisterPopup();
+                
+                // 입력창 및 버튼 상태 초기화 (다음 번을 위해)
+                btn.disabled = false; 
+                btn.innerText = "등록하기";
+                if (cancelBtn) cancelBtn.disabled = false;
+                document.getElementById('user-name').value = '';
+                
+                // UI를 메인 화면으로 강제 이동
+                document.getElementById('game-view').classList.add('hidden');
+                document.getElementById('home-view').classList.remove('hidden');
+                document.getElementById('score-display').innerText = "0";
+                
+                // 랭킹 리스트 임시 로딩 스피너 표시
+                document.getElementById('ranking-list').innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-20 text-slate-300 gap-3">
+                        <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-[10px] font-black tracking-widest">데이터 갱신 중...</span>
+                    </div>
+                `;
+            }, 100);
         }
 
         async function fetchRankings() {
@@ -488,7 +580,9 @@
                 // 팝업이 열려있을 때 엔터 누르면 랭킹 등록
                 if (!popup.classList.contains('hidden')) {
                     const nameInput = document.getElementById('user-name');
-                    if(document.activeElement === nameInput && nameInput.value.trim() !== '') {
+                    const btn = document.getElementById('submit-btn');
+                    // 버튼이 비활성화 상태가 아닐 때만 등록 진행
+                    if(document.activeElement === nameInput && nameInput.value.trim() !== '' && !btn.disabled) {
                         submitScore();
                     }
                 } 
