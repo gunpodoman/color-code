@@ -77,6 +77,13 @@
         input { -webkit-appearance: none; outline: none !important; }
         .hidden { display: none !important; }
         
+        /* 은은한 깜빡임 애니메이션 (정신사납지 않게) */
+        @keyframes softBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .animate-soft-blink { animation: softBlink 2s ease-in-out infinite; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-in { animation: fadeIn 0.4s ease forwards; }
     </style>
@@ -107,7 +114,7 @@
                     <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em] mt-1">Top 10 Color Masters</p>
                 </div>
                 <div id="ranking-list" class="min-h-[260px] max-h-[300px] overflow-y-auto pr-1">
-                    <p class="text-center text-slate-400 py-20 font-bold animate-pulse">데이터 로딩 중...</p>
+                    <p class="text-center text-slate-400 py-20 font-bold">데이터 로딩 중...</p>
                 </div>
                 <button onclick="startGame()" class="w-full btn-gradient text-white py-5 rounded-[1.5rem] font-black text-xl mt-6 active:scale-95 transition-transform">
                     START CHALLENGE
@@ -129,7 +136,7 @@
                     <div id="status-badge" class="text-4xl font-black italic mb-2">GREAT!</div>
                     <div id="similarity-text" class="text-slate-900 font-extrabold text-2xl mb-4">98.5%</div>
                     <div id="diff-analysis" class="w-full space-y-3 bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100 mb-6"></div>
-                    <p class="text-[10px] font-bold text-indigo-400 animate-bounce uppercase tracking-widest">Next Stage: Press Enter</p>
+                    <p class="text-[10px] font-bold text-indigo-400 animate-soft-blink uppercase tracking-widest">Next Stage: Press Enter</p>
                 </div>
 
                 <div class="w-full">
@@ -156,7 +163,8 @@
             </div>
             
             <div id="low-score-msg" class="mb-8 hidden">
-                <p class="text-slate-400 font-bold text-sm">기록이 너무 낮아 랭킹에 등록할 수 없습니다.</p>
+                <p class="text-slate-400 font-bold text-sm mb-2">기록이 너무 낮아 랭킹에 등록할 수 없습니다.</p>
+                <p class="text-[10px] font-extrabold text-indigo-500 animate-soft-blink uppercase tracking-widest">Press Enter to Restart</p>
             </div>
             
             <button onclick="goHome()" class="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] hover:text-slate-600">Back to Main Menu</button>
@@ -171,6 +179,7 @@
         let isResultState = false;
         let top5Score = 0;
         let userIpSuffix = "";
+        let rankingUpdateInterval = null;
 
         // IP 가져오기 (디시인사이드 스타일)
         async function fetchIp() {
@@ -196,6 +205,12 @@
         window.onload = () => { 
             fetchRankings();
             fetchIp();
+            // 5초마다 랭킹 실시간 업데이트 시작
+            rankingUpdateInterval = setInterval(() => {
+                if(!document.getElementById('home-view').classList.contains('hidden')) {
+                    fetchRankings();
+                }
+            }, 5000);
         };
 
         async function fetchRankings() {
@@ -203,7 +218,7 @@
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
-                // 5위 점수 저장 (기록 제한용)
+                
                 if(data.length >= 5) {
                     top5Score = data[4].score;
                 } else {
@@ -218,7 +233,7 @@
                 `).join('');
                 if(data.length === 0) listDiv.innerHTML = '<p class="text-center text-slate-400 py-20 font-bold">첫 번째 랭커가 되어보세요!</p>';
             } catch(e) {
-                listDiv.innerHTML = '<p class="text-center text-red-400 py-20 font-bold">데이터 로드 실패</p>';
+                console.error("랭킹 로드 오류");
             }
         }
 
@@ -234,7 +249,7 @@
             document.getElementById('overlay').classList.add('hidden');
             document.getElementById('game-view').classList.add('hidden');
             document.getElementById('home-view').classList.remove('hidden');
-            fetchRankings();
+            fetchRankings(); // 홈으로 올 때 즉시 갱신
         }
 
         function generateNewColor() {
@@ -274,7 +289,6 @@
             const registerArea = document.getElementById('rank-register-area');
             const lowScoreMsg = document.getElementById('low-score-msg');
             
-            // 0점 방지 및 Top 5 점수 제한
             if(score > 0 && score > top5Score) {
                 registerArea.classList.remove('hidden');
                 lowScoreMsg.classList.add('hidden');
@@ -319,9 +333,7 @@
             let name = document.getElementById('user-name').value.trim();
             if(!name) return;
             
-            // 닉네임 + IP 식별자 합치기
             const fullName = name + " " + userIpSuffix;
-            
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
             btn.innerText = "SAVING...";
@@ -332,22 +344,36 @@
                     mode: 'no-cors',
                     body: JSON.stringify({ name: fullName, score: score })
                 });
-                setTimeout(() => goHome(), 500);
+                // 등록 성공 시 즉시 랭킹 갱신 및 홈으로
+                setTimeout(() => {
+                    fetchRankings(); 
+                    goHome();
+                }, 800);
             } catch(e) {
                 btn.disabled = false;
                 btn.innerText = "TRY AGAIN";
             }
         }
 
-        // 키보드 이벤트
         window.addEventListener('keydown', (e) => {
             if(e.key === 'Enter') {
-                // 이름 입력 창에서 엔터 시 등록
-                if(document.activeElement.id === 'user-name') {
-                    submitScore();
+                // 게임 오버 모달이 떠 있을 때
+                if(!document.getElementById('overlay').classList.contains('hidden')) {
+                    const registerArea = document.getElementById('rank-register-area');
+                    // 랭킹 등록 중이면 등록 실행
+                    if(!registerArea.classList.contains('hidden')) {
+                        if(document.activeElement.id === 'user-name') {
+                            submitScore();
+                        }
+                    } else {
+                        // 랭킹 미달이면 엔터 시 즉시 재시작
+                        startGame();
+                        document.getElementById('overlay').classList.add('hidden');
+                    }
                     return;
                 }
-                // 게임 중 엔터 시 확인/다음
+
+                // 게임 진행 중일 때
                 if(!document.getElementById('game-view').classList.contains('hidden')) {
                     if(isResultState) generateNewColor();
                     else checkAnswer();
