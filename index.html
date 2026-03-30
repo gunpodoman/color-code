@@ -137,8 +137,17 @@
             width: 100%;
         }
 
-        .hex-input::placeholder {
-            color: #444;
+        .hex-input::placeholder { color: #444; }
+        .hex-input:disabled { opacity: 0.7; }
+
+        .success-feedback {
+            display: none;
+            text-align: center;
+            color: var(--success);
+            font-weight: 800;
+            font-size: 14px;
+            margin-top: 16px;
+            letter-spacing: 0.5px;
         }
 
         .action-btn {
@@ -151,7 +160,7 @@
             font-size: 18px;
             font-weight: 700;
             cursor: pointer;
-            margin-top: 24px;
+            margin-top: 20px;
             transition: background 0.2s;
         }
         .action-btn:hover { background: var(--primary-hover); }
@@ -178,15 +187,35 @@
             border-radius: 20px;
             padding: 32px 24px;
             width: 100%;
-            max-width: 360px;
+            max-width: 380px;
             text-align: center;
         }
 
         /* 결과 모달 */
-        .result-title { font-size: 36px; font-weight: 900; color: var(--danger); margin-bottom: 8px; font-style: italic; }
-        .result-score { font-size: 48px; font-weight: 900; margin-bottom: 16px; }
-        .result-sim { color: var(--primary); font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+        .result-title { font-size: 32px; font-weight: 900; color: var(--danger); margin-bottom: 20px; font-style: italic; }
         
+        /* 비교 UI */
+        .comparison-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            width: 100%;
+        }
+        .comp-box {
+            flex: 1;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .comp-label { font-size: 13px; color: var(--text-sub); font-weight: 700; }
+        .comp-color { width: 100%; height: 48px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .comp-hex { font-size: 18px; font-weight: 800; letter-spacing: 1px; color: #fff; }
+
         .diff-bars {
             background: var(--bg-color);
             padding: 16px;
@@ -194,10 +223,10 @@
             margin-bottom: 24px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
         }
-        .diff-row { display: flex; flex-direction: column; gap: 4px; }
-        .diff-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--text-sub); }
+        .diff-row { display: flex; flex-direction: column; gap: 6px; }
+        .diff-label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--text-sub); }
         .bar-bg { height: 12px; background: var(--input-bg); border-radius: 6px; position: relative; overflow: hidden; }
         .bar-fill { height: 100%; position: absolute; transition: width 0.5s ease; }
         .bar-center { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.2); z-index: 2; }
@@ -206,14 +235,9 @@
         .btn-secondary { background: var(--input-bg); color: var(--text-main); border: none; padding: 16px; border-radius: 12px; font-weight: 700; cursor: pointer; }
         .btn-secondary:hover { background: #3a3a3a; }
 
-        /* 랭킹 등록 모달 */
-        .reg-input {
-            width: 100%; padding: 16px; background: var(--input-bg); border: 1px solid var(--border-color);
-            color: white; border-radius: 12px; font-size: 16px; text-align: center; margin-bottom: 16px; outline: none;
-        }
+        /* 랭킹 등록 & 리더보드 모달 */
+        .reg-input { width: 100%; padding: 16px; background: var(--input-bg); border: 1px solid var(--border-color); color: white; border-radius: 12px; font-size: 16px; text-align: center; margin-bottom: 16px; outline: none; }
         .reg-input:focus { border-color: var(--primary); }
-
-        /* 리더보드 모달 */
         .lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; width: 100%; max-width: 400px; }
         .lb-title { font-size: 24px; font-weight: 800; }
         .lb-close { background: none; border: none; color: var(--text-sub); font-size: 24px; cursor: pointer; }
@@ -253,11 +277,13 @@
             <div id="target-color" class="target-box"></div>
             
             <div class="input-panel">
-                <label class="input-label">HEX 입력</label>
+                <label class="input-label">HEX 코드 입력 (엔터키 지원)</label>
                 <div class="hex-input-wrapper">
                     <span class="hex-prefix">#</span>
                     <input type="text" id="hex-input" class="hex-input" maxlength="6" placeholder="000000" autocomplete="off" spellcheck="false" oninput="formatHexInput(this)">
                 </div>
+                
+                <div id="success-feedback" class="success-feedback"></div>
 
                 <button id="action-btn" class="action-btn" onclick="handleAction()">정답 확인</button>
             </div>
@@ -268,17 +294,24 @@
     <div id="result-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="result-title">GAME OVER</div>
-            <div class="result-score" id="result-score">0 PTS</div>
-            <div class="result-sim" id="result-sim">유사도: 0%</div>
+            
+            <!-- 직관적인 비교 UI -->
+            <div class="comparison-container" id="result-comparison">
+                <!-- JS에서 채워짐 -->
+            </div>
 
-            <!-- HEX 비교는 직관적이지 않으므로, 원본처럼 RGB 오차 게이지로 보여줍니다 -->
+            <!-- 명확한 오차율 바 -->
             <div class="diff-bars" id="result-details">
                 <!-- JS에서 채워짐 -->
             </div>
 
+            <div style="font-size: 20px; font-weight: 800; margin-bottom: 20px;">
+                최종 점수: <span id="result-score" style="color: var(--primary);">0 PTS</span>
+            </div>
+
             <div class="btn-group">
                 <button class="action-btn" id="btn-register" onclick="openRegister()" style="margin-top:0; display:none;">랭킹 등록하기</button>
-                <button class="btn-secondary" onclick="startGame()">다시 도전하기</button>
+                <button class="btn-secondary" onclick="startGame()">다시 도전하기 (Enter)</button>
             </div>
         </div>
     </div>
@@ -290,7 +323,7 @@
             <div style="color: var(--text-sub); margin-bottom: 24px;">최종 점수: <span id="final-score" style="color: #fbbf24; font-weight: 800;"></span> PTS</div>
             
             <input type="text" id="reg-nickname" class="reg-input" placeholder="닉네임 (최대 8자)" maxlength="8">
-            <button class="action-btn" id="submit-btn" onclick="submitScore()" style="margin-top:0;">등록하기</button>
+            <button class="action-btn" id="submit-btn" onclick="submitScore()" style="margin-top:0;">등록하기 (Enter)</button>
             <button class="btn-secondary" onclick="closeRegister()" style="margin-top:12px; background: transparent; padding: 8px; font-size: 14px; color: var(--text-sub);">건너뛰기</button>
         </div>
     </div>
@@ -306,7 +339,7 @@
         </div>
     </div>
 
-    <!-- 강력 밴 화면 (HTML 파괴 후 노출) -->
+    <!-- 강력 밴 화면 -->
     <div id="ban-screen">
         <i class="fas fa-ban" style="color: #ef4444; font-size: 64px; margin-bottom: 24px;"></i>
         <h1 style="color: white; font-size: 32px; font-weight: 900; margin-bottom: 12px;">ACCESS DENIED</h1>
@@ -324,7 +357,7 @@
         let questionStartTime = 0;
         let deviceId = "";
         
-        // --- 🛡️ 보안 / 매크로 방어 변수 ---
+        // 보안 로직
         let inputLogs = []; 
         let isBanned = false; 
         let isBanProcessing = false; 
@@ -343,12 +376,33 @@
             startGame();
         };
 
-        // --- 🚨 철벽 방어 로직 ---
+        // --- ⌨️ 엔터키 글로벌 이벤트 처리 ---
+        window.addEventListener('keydown', (e) => {
+            if (isBanned) return;
+            if (e.key === 'Enter') {
+                e.preventDefault(); // 기본 폼 제출 방지
+
+                const resultModal = document.getElementById('result-modal');
+                const regModal = document.getElementById('register-modal');
+
+                // 랭킹 등록창이 열려있으면 등록
+                if (regModal.classList.contains('active')) {
+                    submitScore();
+                } 
+                // 결과창이 열려있으면 재시작
+                else if (resultModal.classList.contains('active')) {
+                    startGame();
+                } 
+                // 둘다 아니면 정답 확인/다음 진행
+                else {
+                    handleAction();
+                }
+            }
+        });
+
         function enforceBanScreen() {
             document.getElementById('game-container').style.display = 'none';
-            const modals = document.querySelectorAll('.modal-overlay');
-            modals.forEach(m => m.style.display = 'none');
-            
+            document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
             const banScreen = document.getElementById('ban-screen');
             banScreen.style.display = 'flex';
             document.getElementById('ban-device-id').innerText = `Device ID: ${deviceId}`;
@@ -356,12 +410,10 @@
 
         function executeBan() {
             if (isBanned || isBanProcessing) return; 
-            isBanProcessing = true;
-            isBanned = true;
+            isBanProcessing = true; isBanned = true;
             localStorage.setItem('is_banned', 'true');
             enforceBanScreen();
 
-            // 리더보드 오염 방지 (-999점 조작 전송)
             if(API_URL !== "YOUR_GOOGLE_SHEET_MACRO_URL") {
                 fetch(API_URL, { 
                     method: 'POST', mode: 'no-cors', 
@@ -370,11 +422,9 @@
             }
         }
 
-        // --- 게임 로직 ---
         function formatHexInput(input) {
             if (isBanned) return;
-            inputLogs.push(performance.now()); // 키로그 수집 (매크로 감지용)
-            // 영문 대문자 변환 및 0-9, A-F 이외 문자 제거
+            inputLogs.push(performance.now());
             input.value = input.value.toUpperCase().replace(/[^0-9A-F]/g, '');
         }
 
@@ -402,23 +452,33 @@
             
             const inputEl = document.getElementById('hex-input');
             inputEl.value = '';
+            inputEl.disabled = false;
             inputEl.focus();
             
+            document.getElementById('success-feedback').style.display = 'none';
+
             const btn = document.getElementById('action-btn');
-            btn.innerText = '정답 확인';
+            btn.innerText = '정답 확인 (Enter)';
             btn.className = "action-btn";
             
             questionStartTime = performance.now();
         }
 
         function hexToRgb(hex) {
-            // 자리수가 부족하면 뒤에 0을 붙임 (예: F -> F00000)
             hex = hex.padEnd(6, '0');
             return {
                 r: parseInt(hex.substring(0, 2), 16),
                 g: parseInt(hex.substring(2, 4), 16),
                 b: parseInt(hex.substring(4, 6), 16)
             };
+        }
+
+        function rgbToHexStr(r, g, b) {
+            const toHex = (c) => {
+                const hex = c.toString(16).toUpperCase();
+                return hex.length === 1 ? "0" + hex : hex;
+            };
+            return "#" + toHex(r) + toHex(g) + toHex(b);
         }
 
         function handleAction() {
@@ -436,24 +496,22 @@
             let hexVal = document.getElementById('hex-input').value;
             if (hexVal.length === 0) hexVal = "000000";
 
-            // 🚨 매크로 감지 로직
+            // 매크로 감지
             if (inputLogs.length >= 2) {
                 let intervals = [];
-                for (let i = 1; i < inputLogs.length; i++) {
-                    intervals.push(inputLogs[i] - inputLogs[i - 1]);
-                }
+                for (let i = 1; i < inputLogs.length; i++) intervals.push(inputLogs[i] - inputLogs[i - 1]);
                 const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
                 const variance = intervals.reduce((a, b) => a + Math.pow(b - avgInterval, 2), 0) / intervals.length;
                 const timeTaken = performance.now() - questionStartTime;
                 
-                // 15ms 이하 초인적 속도, 분산 5 이하 기계적 입력, 50ms 이내 서브밋
                 if (avgInterval < 15 || (variance < 5 && intervals.length >= 3) || timeTaken < 50) {
-                    executeBan(); 
-                    return; 
+                    executeBan(); return; 
                 }
             }
 
             const userRgb = hexToRgb(hexVal);
+            const userHexStr = "#" + hexVal.padEnd(6, '0');
+            const targetHexStr = rgbToHexStr(targetRgb.r, targetRgb.g, targetRgb.b);
             
             const diffR = Math.abs(targetRgb.r - userRgb.r);
             const diffG = Math.abs(targetRgb.g - userRgb.g);
@@ -461,41 +519,56 @@
             const maxDiff = 255 * 3;
             const similarity = Math.max(0, (1 - ((diffR + diffG + diffB) / maxDiff)) * 100);
 
-            // 난이도 기준: 85% 이상 정답 처리 (HEX는 RGB보다 어렵기 때문에 기준 조정 가능)
             let isPassed = similarity >= 85; 
 
             if (isPassed) {
                 score += 5;
                 document.getElementById('score-display').innerText = score;
+                
+                // 정답 맞혔을 시, 피드백 보여주기
+                const feedbackEl = document.getElementById('success-feedback');
+                feedbackEl.innerText = `정답: ${targetHexStr} (유사도 ${similarity.toFixed(1)}%)`;
+                feedbackEl.style.display = 'block';
+                document.getElementById('hex-input').disabled = true; // 대기 중 수정 방지
+
                 const btn = document.getElementById('action-btn');
-                btn.innerText = '다음 색상';
+                btn.innerText = '다음 색상 (Enter)';
                 btn.className = "action-btn success";
                 isFailed = false;
             } else {
                 isFailed = true;
-                showGameOver(similarity, userRgb);
+                showGameOver(userRgb, userHexStr, targetHexStr);
             }
             
             isResultState = true;
         }
 
-        function showGameOver(sim, userRgb) {
+        function showGameOver(userRgb, userHexStr, targetHexStr) {
             if (isBanned) return;
             const modal = document.getElementById('result-modal');
             modal.classList.add('active');
             
-            document.getElementById('result-sim').innerText = `유사도: ${sim.toFixed(1)}%`;
             document.getElementById('result-score').innerText = `${score} PTS`;
             
-            const diffR = userRgb.r - targetRgb.r;
-            const diffG = userRgb.g - targetRgb.g;
-            const diffB = userRgb.b - targetRgb.b;
+            // 비교 박스 UI 주입
+            document.getElementById('result-comparison').innerHTML = `
+                <div class="comp-box">
+                    <div class="comp-label">정답 색상</div>
+                    <div class="comp-color" style="background-color: ${targetHexStr}"></div>
+                    <div class="comp-hex">${targetHexStr}</div>
+                </div>
+                <div class="comp-box">
+                    <div class="comp-label">내 입력</div>
+                    <div class="comp-color" style="background-color: ${userHexStr}"></div>
+                    <div class="comp-hex">${userHexStr}</div>
+                </div>
+            `;
 
-            // HEX 버전이라도 오차는 RGB 기준으로 보여주는 것이 직관적입니다.
+            // 오차 디테일 바
             document.getElementById('result-details').innerHTML = `
-                ${createDiffBar('R', diffR, '#ef4444')}
-                ${createDiffBar('G', diffG, '#10b981')}
-                ${createDiffBar('B', diffB, '#3b82f6')}
+                ${createDiffBar('R', targetRgb.r, userRgb.r, '#ef4444')}
+                ${createDiffBar('G', targetRgb.g, userRgb.g, '#10b981')}
+                ${createDiffBar('B', targetRgb.b, userRgb.b, '#3b82f6')}
             `;
 
             const regBtn = document.getElementById('btn-register');
@@ -506,21 +579,25 @@
             }
         }
 
-        function createDiffBar(label, diff, color) {
+        function createDiffBar(label, targetVal, userVal, color) {
+            const diff = userVal - targetVal;
             let width = Math.min(100, Math.abs(diff) / 255 * 100);
             let isNegative = diff < 0;
+            
+            // 바 방향 설정 (음수면 왼쪽으로 채워짐, 양수면 오른쪽으로 채워짐)
             let barStyle = isNegative 
                 ? `right: 50%; width: ${width}%; background-color: ${color}; border-radius: 6px 0 0 6px;`
                 : `left: 50%; width: ${width}%; background-color: ${color}; border-radius: 0 6px 6px 0;`;
 
-            let sign = diff > 0 ? '+' : '';
-            let valColor = diff === 0 ? 'var(--text-sub)' : color;
+            // 명쾌한 오차율 메시지
+            let signMsg = diff === 0 ? 'PERFECT' : (diff > 0 ? `+${diff}` : `${diff}`);
+            let valColor = diff === 0 ? 'var(--text-main)' : color;
 
             return `
             <div class="diff-row">
                 <div class="diff-label">
-                    <span>${label}</span>
-                    <span style="color: ${valColor}">${sign}${diff}</span>
+                    <span>${label} (목표: ${targetVal})</span>
+                    <span style="color: ${valColor}; font-weight: 900; font-size: 14px;">${signMsg}</span>
                 </div>
                 <div class="bar-bg">
                     <div class="bar-center"></div>
@@ -529,7 +606,7 @@
             </div>`;
         }
 
-        // --- 리더보드 통신 ---
+        // --- 리더보드/등록 ---
         function openRegister() {
             if (isBanned) return;
             document.getElementById('result-modal').classList.remove('active');
@@ -561,7 +638,7 @@
                     document.getElementById('register-modal').classList.remove('active');
                     showLeaderboard();
                 }).finally(() => {
-                    btn.innerText = '등록하기';
+                    btn.innerText = '등록하기 (Enter)';
                     btn.disabled = false;
                 });
             } else {
@@ -581,20 +658,13 @@
                 .then(res => res.json())
                 .then(data => {
                     listEl.innerHTML = '';
-                    // 🛑 -999점(밴 유저) 필터링
                     const validData = data.filter(item => item.score >= 0);
-                    
                     if (validData.length === 0) {
                         listEl.innerHTML = '<div style="text-align:center; color: var(--text-sub); padding: 40px;">등록된 기록이 없습니다.</div>';
                         return;
                     }
-
                     validData.slice(0, 10).forEach((item, index) => {
-                        let rankClass = "";
-                        if (index === 0) rankClass = "gold";
-                        else if (index === 1) rankClass = "silver";
-                        else if (index === 2) rankClass = "bronze";
-
+                        let rankClass = index === 0 ? "gold" : index === 1 ? "silver" : index === 2 ? "bronze" : "";
                         listEl.innerHTML += `
                             <div class="lb-item">
                                 <div class="lb-rank-name">
