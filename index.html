@@ -27,7 +27,7 @@
             border-radius: 2.5rem;
             width: 100%; max-width: 400px;
             padding: 32px;
-            position: relative; /* 결과창이 카드 내부를 덮도록 상대 위치 설정 */
+            position: relative;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
@@ -104,7 +104,7 @@
                 <div id="ranking-list" class="min-h-[260px] max-h-[300px] overflow-y-auto space-y-3 mb-8 pr-1">
                     <div class="flex flex-col items-center justify-center py-20 text-slate-300 gap-3">
                         <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                        <span class="text-[10px] font-black tracking-widest">보안 연결 중...</span>
+                        <span class="text-[10px] font-black tracking-widest">데이터 갱신 중...</span>
                     </div>
                 </div>
 
@@ -115,9 +115,8 @@
 
             <!-- 게임 화면 -->
             <div id="game-view" class="main-card hidden">
-                <!-- 퀴즈 UI (결과창이 뜰 때 숨겨짐) -->
+                <!-- 퀴즈 UI -->
                 <div id="quiz-content" class="w-full">
-                    <!-- 모드 스위처 (게임 중 변경 가능) -->
                     <div class="mode-switch-container">
                         <button id="mode-rgb-btn" onclick="setMode('RGB')" class="mode-btn active">RGB MODE</button>
                         <button id="mode-hex-btn" onclick="setMode('HEX')" class="mode-btn">HEX MODE</button>
@@ -138,7 +137,7 @@
                     </div>
                 </div>
                 
-                <!-- 통합된 결과창 및 게임오버 UI (absolute 제거, 흐름에 맞게 배치) -->
+                <!-- 통합된 결과창 및 게임오버 UI -->
                 <div id="result-panel" class="hidden w-full flex-col items-center justify-center py-4">
                     <div id="status-badge" class="text-4xl font-black italic mb-1 text-indigo-600 tracking-tighter">GREAT!</div>
                     <div id="similarity-text" class="text-slate-900 font-black text-5xl mb-3">0%</div>
@@ -160,8 +159,6 @@
                 </div>
             </div>
 
-            <!-- 하단 액션 버튼 (오답 시 숨김 처리됨) -->
-            <!-- 하단 액션 버튼 (오답 시 숨김 처리됨) -->
             <button id="mobile-action-btn" class="hidden w-full max-w-[400px] py-5 mt-6 rounded-3xl text-white font-black text-xl btn-primary shadow-2xl" onclick="handleActionButton()">
                 정답 확인
             </button>
@@ -196,7 +193,6 @@
         let inputLogs = [];
         let isCheater = false;
 
-        // 쿠키 설정 함수 (localStorage 초기화 대비)
         function setCookie(name, value, days) {
             let expires = "";
             if (days) {
@@ -207,7 +203,6 @@
             document.cookie = name + "=" + (value || "")  + expires + "; path=/";
         }
 
-        // 쿠키 가져오기 함수
         function getCookie(name) {
             let nameEQ = name + "=";
             let ca = document.cookie.split(';');
@@ -219,11 +214,9 @@
             return null;
         }
 
-        // 기기 환경 핑거프린트 생성 (브라우저 정보 기반 고유 해시 - 랜덤값 제거, 정확도 극대화)
         function generateFingerprint() {
             const screenW = Math.max(screen.width, screen.height);
             const screenH = Math.min(screen.width, screen.height);
-            // WebGL 렌더러 정보를 가져와서 기기 식별력 강화
             const canvas = document.createElement('canvas');
             const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
             let renderer = '';
@@ -231,7 +224,6 @@
                 const ext = gl.getExtension('WEBGL_debug_renderer_info');
                 if (ext) renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
             }
-            // 변동성이 높은 userAgent 제외, 고정 하드웨어 정보만 조합
             const fp = navigator.platform + "-" + navigator.language + "-" + screenW + "x" + screenH + "-" + (navigator.hardwareConcurrency || '') + "-" + renderer;
             let hash = 0;
             for (let i = 0; i < fp.length; i++) {
@@ -241,20 +233,17 @@
             return Math.abs(hash).toString(36).toUpperCase();
         }
 
-        // 강력한 기기 고유 ID 생성/유지 함수 (LocalStorage + Cookie + Fingerprint)
         function getOrCreateDeviceId() {
             let id = null;
             try { id = localStorage.getItem('absolute_color_device_id'); } catch(e) {}
             if (!id) id = getCookie('absolute_color_device_id');
             
-            // 기기 고유 해시로만 ID 생성 (랜덤 난수 제거하여 캐시 삭제 시에도 동일 ID 완전 복구)
             const expectedId = "DVC-" + generateFingerprint();
             
             if (!id || id !== expectedId) {
                 id = expectedId;
             }
             
-            // 항상 두 곳 모두에 최신/동일 값 저장 시도 (유실 방지)
             try { localStorage.setItem('absolute_color_device_id', id); } catch(e) {}
             setCookie('absolute_color_device_id', id, 365);
             
@@ -315,7 +304,6 @@
             const b = Math.floor(Math.random() * 256);
             targetColor = { r, g, b, hex: rgbToHex(r, g, b) };
             
-            // UI 초기화: 퀴즈 영역 보이고, 결과창 숨기기
             document.getElementById('quiz-content').classList.remove('hidden');
             document.getElementById('result-panel').classList.add('hidden');
             document.getElementById('result-panel').classList.remove('flex');
@@ -354,19 +342,8 @@
             else checkAnswer();
         }
 
+        // ---------- 극한으로 강화된 핵 탐지 로직이 포함된 checkAnswer ----------
         function checkAnswer() {
-            const now = Date.now();
-            const timeDiff = now - lastColorTime;
-            
-            if(timeDiff < 600) isCheater = true;
-            if(inputLogs.length >= 4) {
-                const intervals = [];
-                for(let i=1; i<inputLogs.length; i++) intervals.push(inputLogs[i].t - inputLogs[i-1].t);
-                const avg = intervals.reduce((a,b)=>a+b)/intervals.length;
-                const variance = intervals.reduce((a,b)=>a+Math.pow(b-avg,2),0)/intervals.length;
-                if(variance < 10) isCheater = true;
-            }
-
             let userRgb;
             if(currentMode === 'RGB') {
                 userRgb = {
@@ -381,9 +358,40 @@
             const dist = Math.sqrt(Math.pow(targetColor.r-userRgb.r,2)+Math.pow(targetColor.g-userRgb.g,2)+Math.pow(targetColor.b-userRgb.b,2));
             const similarity = Math.max(0, 100 - (dist / 441.67 * 100));
 
-            // 성공 판정 기준을 70%로 완화
+            const now = Date.now();
+            const timeDiff = now - lastColorTime;
+            
+            // [핵 방어 1] 초인적 반응 속도 (0.8초 이내는 무조건 기계)
+            if(timeDiff < 800) isCheater = true;
+            
+            // [핵 방어 2] 물리적 타이핑(input 이벤트) 기록이 아예 없는데 고득점 (스크립트 봇이 DOM 강제 조작)
+            if(similarity >= 70 && inputLogs.length === 0) isCheater = true;
+
+            // [핵 방어 3] 키보드 매크로 탐지 (타이핑 간격이 비정상적으로 일정함)
+            if(inputLogs.length >= 3) {
+                const intervals = [];
+                for(let i=1; i<inputLogs.length; i++) intervals.push(inputLogs[i].t - inputLogs[i-1].t);
+                const avg = intervals.reduce((a,b)=>a+b, 0) / Math.max(1, intervals.length);
+                const variance = intervals.reduce((a,b)=>a+Math.pow(b-avg,2), 0) / Math.max(1, intervals.length);
+                if(variance < 5) isCheater = true; // 인간은 분산이 5 미만으로 나올 수 없음
+            }
+
+            // [핵 방어 4 - 헥스(HEX) 집중 방어]
+            // 핵 프로그램이 HEX 입력창에 단 1번 복붙(또는 값 주입)하고 1.5초 이내에 제출하는 패턴 차단
+            if(currentMode === 'HEX' && inputLogs.length <= 1 && timeDiff < 1500) {
+                isCheater = true;
+            }
+
+            // [핵 방어 5 - RGB 방어]
+            // R, G, B 칸을 다 채우려면 최소 3번의 이벤트가 발생해야 함. 그 미만인데 고득점이면 차단
+            if(currentMode === 'RGB' && similarity >= 70 && inputLogs.length < 3) {
+                isCheater = true;
+            }
+
+            // 성공 판정 기준 (70% 이상)
             showResult(similarity, userRgb, similarity < 70);
         }
+        // -------------------------------------------------------------------
 
         function createGaugeHTML(label, target, user, bgClass) {
             const diff = user - target;
@@ -409,7 +417,6 @@
             isResultState = true;
             isFailed = failed;
             
-            // UI 전환: 퀴즈 영역 숨기고, 결과창 보이기
             document.getElementById('quiz-content').classList.add('hidden');
             const panel = document.getElementById('result-panel');
             panel.classList.remove('hidden');
@@ -418,7 +425,7 @@
             document.getElementById('similarity-text').innerText = `${sim.toFixed(1)}%`;
             
             document.getElementById('diff-analysis').innerHTML = `
-                <div class="flex justify-between items-center text-[10px] font-black text-slate-400 mb-3 uppercase tracking-widest border-b border-slate-200 pb-2">
+                <div class="flex justify-between items-center text-[10px] font-black text-slate-400 mb-4 uppercase tracking-widest border-b border-slate-200 pb-2">
                     <span>Target <span class="text-slate-800 ml-1">R${targetColor.r} G${targetColor.g} B${targetColor.b}</span></span>
                     <span>Yours <span class="text-indigo-600 ml-1">R${userRgb.r} G${userRgb.g} B${userRgb.b}</span></span>
                 </div>
@@ -434,30 +441,27 @@
             const gameOverScore = document.getElementById('game-over-score');
 
             if(isFailed) {
-                // 게임 오버 상태 UI 처리 (창 내부)
                 badge.innerText = "GAME OVER"; 
                 badge.className = "text-4xl font-black italic mb-1 text-rose-500 tracking-tighter";
                 
-                actionBtn.classList.add('hidden'); // 하단 공통 버튼 숨김
-                continueHint.classList.add('hidden'); // 계속하기 텍스트 숨김
+                actionBtn.classList.add('hidden'); 
+                continueHint.classList.add('hidden'); 
                 
                 gameOverScore.innerText = `최종 기록: ${score} PTS`;
-                gameOverScore.classList.remove('hidden'); // 최종 점수 노출
+                gameOverScore.classList.remove('hidden'); 
                 
                 gameOverActions.classList.remove('hidden');
-                gameOverActions.classList.add('flex'); // 게임오버 메뉴 노출
+                gameOverActions.classList.add('flex'); 
                 
                 const btnReg = document.getElementById('btn-register-popup');
                 
                 if(score > 0) { 
                     btnReg.classList.remove('hidden'); 
-                    // 결과창을 볼 필요 없이 즉시 랭킹 등록 다크 팝업 자동 호출
                     openRegisterPopup();
                 } else { 
                     btnReg.classList.add('hidden'); 
                 }
             } else {
-                // 정답 맞췄을 때 상태 처리
                 gameOverScore.classList.add('hidden');
                 gameOverActions.classList.add('hidden');
                 gameOverActions.classList.remove('flex');
@@ -488,7 +492,6 @@
             popup.classList.add('hidden');
             popup.classList.remove('flex');
             
-            // 취소 시 즉시 메인 화면으로 돌아가기
             if (isFailed) {
                 document.getElementById('game-view').classList.add('hidden');
                 document.getElementById('home-view').classList.remove('hidden');
@@ -504,36 +507,30 @@
             const btn = document.getElementById('submit-btn');
             const cancelBtn = document.getElementById('cancel-btn');
             
-            // 중복 클릭 방지를 위해 즉시 버튼 비활성화
             btn.disabled = true; 
             btn.innerText = "기록 중...";
             if (cancelBtn) cancelBtn.disabled = true;
 
-            // 새로고침으로 인한 지연을 없애기 위해 Background API 호출 (Fire and Forget)
             fetch(API_URL, { 
                 method: 'POST', 
                 mode: 'no-cors', 
                 body: JSON.stringify({ name, score, device: deviceId, is_cheater: isCheater }) 
             }).then(() => {
-                fetchRankings(); // 전송 성공 시 조용히 랭킹만 갱신
+                fetchRankings();
             }).catch(() => {});
 
-            // 전송을 기다리지 않고 즉각적으로 메인 화면으로 전환 (UX 속도 극대화)
             setTimeout(() => {
                 closeRegisterPopup();
                 
-                // 입력창 및 버튼 상태 초기화 (다음 번을 위해)
                 btn.disabled = false; 
                 btn.innerText = "등록하기";
                 if (cancelBtn) cancelBtn.disabled = false;
                 document.getElementById('user-name').value = '';
                 
-                // UI를 메인 화면으로 강제 이동
                 document.getElementById('game-view').classList.add('hidden');
                 document.getElementById('home-view').classList.remove('hidden');
                 document.getElementById('score-display').innerText = "0";
                 
-                // 랭킹 리스트 임시 로딩 스피너 표시
                 document.getElementById('ranking-list').innerHTML = `
                     <div class="flex flex-col items-center justify-center py-20 text-slate-300 gap-3">
                         <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
@@ -569,7 +566,6 @@
             const isSafe = await checkSecurity();
             if(isSafe) {
                 fetchRankings();
-                // 5초마다 실시간 랭킹 갱신
                 setInterval(fetchRankings, 5000);
             }
         };
@@ -577,16 +573,13 @@
         window.addEventListener('keydown', (e) => { 
             if(e.key === 'Enter') {
                 const popup = document.getElementById('register-popup');
-                // 팝업이 열려있을 때 엔터 누르면 랭킹 등록
                 if (!popup.classList.contains('hidden')) {
                     const nameInput = document.getElementById('user-name');
                     const btn = document.getElementById('submit-btn');
-                    // 버튼이 비활성화 상태가 아닐 때만 등록 진행
                     if(document.activeElement === nameInput && nameInput.value.trim() !== '' && !btn.disabled) {
                         submitScore();
                     }
                 } 
-                // 팝업이 안 열려있고 게임 오버 상태일 때 엔터 누르면 동작 제어
                 else if (isResultState && isFailed) {
                     if (score === 0) {
                         startGame();
