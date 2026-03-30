@@ -115,49 +115,52 @@
 
             <!-- 게임 화면 -->
             <div id="game-view" class="main-card hidden">
-                <!-- 모드 스위처 (게임 중 변경 가능) -->
-                <div class="mode-switch-container">
-                    <button id="mode-rgb-btn" onclick="setMode('RGB')" class="mode-btn active">RGB MODE</button>
-                    <button id="mode-hex-btn" onclick="setMode('HEX')" class="mode-btn">HEX MODE</button>
-                </div>
+                <!-- 퀴즈 UI (결과창이 뜰 때 숨겨짐) -->
+                <div id="quiz-content" class="w-full">
+                    <!-- 모드 스위처 (게임 중 변경 가능) -->
+                    <div class="mode-switch-container">
+                        <button id="mode-rgb-btn" onclick="setMode('RGB')" class="mode-btn active">RGB MODE</button>
+                        <button id="mode-hex-btn" onclick="setMode('HEX')" class="mode-btn">HEX MODE</button>
+                    </div>
 
-                <div id="target-color-display"></div>
+                    <div id="target-color-display"></div>
+                    
+                    <div id="input-container" class="mt-4">
+                        <div id="input-area-rgb" class="grid grid-cols-3 gap-2">
+                            <input type="number" id="input-r" placeholder="R" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, 'input-g')">
+                            <input type="number" id="input-g" placeholder="G" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, 'input-b')">
+                            <input type="number" id="input-b" placeholder="B" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, null)">
+                        </div>
+                        <div id="input-area-hex" class="hidden relative">
+                            <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-black text-2xl">#</span>
+                            <input type="text" id="input-hex" maxlength="6" placeholder="HEX CODE" class="w-full py-5 pl-14 rounded-2xl font-black text-2xl tracking-widest uppercase">
+                        </div>
+                    </div>
+                </div>
                 
-                <!-- 통합된 결과창 및 게임오버 UI -->
-                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[2.5rem] flex flex-col items-center justify-center p-6 z-30">
+                <!-- 통합된 결과창 및 게임오버 UI (absolute 제거, 흐름에 맞게 배치) -->
+                <div id="result-panel" class="hidden w-full flex-col items-center justify-center py-4">
                     <div id="status-badge" class="text-4xl font-black italic mb-1 text-indigo-600 tracking-tighter">GREAT!</div>
-                    <div id="similarity-text" class="text-slate-900 font-black text-4xl mb-2">0%</div>
+                    <div id="similarity-text" class="text-slate-900 font-black text-5xl mb-3">0%</div>
                     
                     <!-- 게임 오버 시에만 보이는 최종 점수 -->
-                    <div id="game-over-score" class="hidden text-indigo-600 font-black mb-4 text-2xl">0 PTS</div>
+                    <div id="game-over-score" class="hidden text-indigo-600 font-black mb-6 text-2xl">0 PTS</div>
 
-                    <div id="diff-analysis" class="w-full space-y-2 mb-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 font-bold text-xs text-slate-500"></div>
+                    <div id="diff-analysis" class="w-full space-y-3 mb-6 bg-slate-50 p-5 rounded-2xl border border-slate-100 font-bold text-xs text-slate-500"></div>
                     
                     <!-- 정답 맞췄을 때 진행 안내 -->
-                    <p id="continue-hint" class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] animate-pulse mb-2">Tap to Continue</p>
+                    <p id="continue-hint" class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] animate-pulse mb-2 mt-4">Tap to Continue</p>
                     
                     <!-- 게임 오버 시에만 나타나는 액션 영역 -->
-                    <div id="game-over-actions" class="hidden w-full flex-col gap-2">
-                        <div id="rank-register-area" class="w-full hidden flex-col gap-2">
-                            <input type="text" id="user-name" maxlength="10" placeholder="NICKNAME" class="w-full py-3 bg-slate-50 rounded-xl text-center font-black text-lg border-2 border-slate-200">
-                            <button onclick="submitScore()" id="submit-btn" class="w-full bg-slate-950 text-white py-3 rounded-xl font-black text-lg shadow-lg">랭킹 등록하기</button>
+                    <div id="game-over-actions" class="hidden w-full flex-col gap-3 mt-2">
+                        <div id="rank-register-area" class="w-full hidden flex-col gap-3">
+                            <input type="text" id="user-name" maxlength="10" placeholder="NICKNAME" class="w-full py-4 bg-slate-50 rounded-xl text-center font-black text-lg border-2 border-slate-200 focus:border-indigo-500 transition-colors">
+                            <button onclick="submitScore()" id="submit-btn" class="w-full bg-slate-900 hover:bg-black text-white py-4 rounded-xl font-black text-lg shadow-lg transition-colors">랭킹 등록하기</button>
                         </div>
                         <div id="low-score-msg" class="w-full hidden">
-                            <button onclick="startGame()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-black text-lg shadow-lg">다시 도전</button>
+                            <button onclick="startGame()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-black text-lg shadow-lg transition-colors">다시 도전</button>
                         </div>
-                        <button onclick="location.reload()" class="text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:text-slate-600 transition-colors mt-2 p-2">메인으로 돌아가기</button>
-                    </div>
-                </div>
-
-                <div id="input-container" class="mt-4">
-                    <div id="input-area-rgb" class="grid grid-cols-3 gap-2">
-                        <input type="number" id="input-r" placeholder="R" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, 'input-g')">
-                        <input type="number" id="input-g" placeholder="G" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, 'input-b')">
-                        <input type="number" id="input-b" placeholder="B" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, null)">
-                    </div>
-                    <div id="input-area-hex" class="hidden relative">
-                        <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-black text-2xl">#</span>
-                        <input type="text" id="input-hex" maxlength="6" placeholder="HEX CODE" class="w-full py-5 pl-14 rounded-2xl font-black text-2xl tracking-widest uppercase">
+                        <button onclick="location.reload()" class="text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:text-slate-600 transition-colors mt-4 p-2">메인으로 돌아가기</button>
                     </div>
                 </div>
             </div>
@@ -181,20 +184,18 @@
         let inputLogs = [];
         let isCheater = false;
 
-        function generateSecureId() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.textBaseline = "top"; ctx.font = "14px Arial";
-            ctx.fillText(navigator.userAgent + screen.width, 2, 15);
-            const str = canvas.toDataURL();
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                hash |= 0;
+        // localStorage를 활용하여 기기 고유 ID 고정 (아이패드 등 핑거프린트 변경 방지)
+        function getOrCreateDeviceId() {
+            let id = localStorage.getItem('absolute_color_device_id');
+            if (!id) {
+                // 새로운 랜덤 ID 생성
+                const randomPart = Math.random().toString(36).substring(2, 10).toUpperCase();
+                id = "DVC-" + randomPart;
+                localStorage.setItem('absolute_color_device_id', id);
             }
-            return "DVC-" + Math.abs(hash).toString(36).toUpperCase();
+            return id;
         }
-        const deviceId = generateSecureId();
+        const deviceId = getOrCreateDeviceId();
 
         async function checkSecurity() {
             try {
@@ -249,8 +250,12 @@
             const b = Math.floor(Math.random() * 256);
             targetColor = { r, g, b, hex: rgbToHex(r, g, b) };
             
-            document.getElementById('target-color-display').style.backgroundColor = targetColor.hex;
+            // UI 초기화: 퀴즈 영역 보이고, 결과창 숨기기
+            document.getElementById('quiz-content').classList.remove('hidden');
             document.getElementById('result-panel').classList.add('hidden');
+            document.getElementById('result-panel').classList.remove('flex');
+            
+            document.getElementById('target-color-display').style.backgroundColor = targetColor.hex;
             
             const actionBtn = document.getElementById('mobile-action-btn');
             actionBtn.innerText = "정답 확인";
@@ -337,17 +342,17 @@
         function showResult(sim, userRgb, failed) {
             isResultState = true;
             isFailed = failed;
+            
+            // UI 전환: 퀴즈 영역 숨기고, 결과창 보이기
+            document.getElementById('quiz-content').classList.add('hidden');
             const panel = document.getElementById('result-panel');
             panel.classList.remove('hidden');
+            panel.classList.add('flex');
+
             document.getElementById('similarity-text').innerText = `${sim.toFixed(1)}%`;
             
             document.getElementById('diff-analysis').innerHTML = `
-                <div class="flex justify-between items-center text-[10px] font-black text-slate-400 mb-3 uppercase tracking-widest border-b border-slate-200 pb-2">
-                    <span>Target <span class="text-slate-800 ml-1">R${targetColor.r} G${targetColor.g} B${targetColor.b}</span></span>
-                    <span>Yours <span class="text-indigo-600 ml-1">R${userRgb.r} G${userRgb.g} B${userRgb.b}</span></span>
-                </div>
-                ${createGaugeHTML('RED', targetColor.r, userRgb.r, 'bg-rose-500')}
-                ${createGaugeHTML('GREEN', targetColor.g, userRgb.g, 'bg-emerald-500')}
+                <div class="flex justify-between items-center text-[10px] font-black text-slate-400 mb-4 uppercase tracking-widest border-b border-slate-200 pb-2">
                 ${createGaugeHTML('BLUE', targetColor.b, userRgb.b, 'bg-blue-500')}
             `;
 
