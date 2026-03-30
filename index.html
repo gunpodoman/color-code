@@ -153,23 +153,35 @@
                     
                     <!-- 게임 오버 시에만 나타나는 액션 영역 -->
                     <div id="game-over-actions" class="hidden w-full flex-col gap-3 mt-2">
-                        <div id="rank-register-area" class="w-full hidden flex-col gap-3">
-                            <input type="text" id="user-name" maxlength="10" placeholder="NICKNAME" class="w-full py-4 bg-slate-50 rounded-xl text-center font-black text-lg border-2 border-slate-200 focus:border-indigo-500 transition-colors">
-                            <button onclick="submitScore()" id="submit-btn" class="w-full bg-slate-900 hover:bg-black text-white py-4 rounded-xl font-black text-lg shadow-lg transition-colors">랭킹 등록하기</button>
-                        </div>
-                        <div id="low-score-msg" class="w-full hidden">
-                            <button onclick="startGame()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-black text-lg shadow-lg transition-colors">다시 도전</button>
-                        </div>
-                        <button onclick="location.reload()" class="text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:text-slate-600 transition-colors mt-4 p-2">메인으로 돌아가기</button>
+                        <button id="btn-register-popup" onclick="openRegisterPopup()" class="hidden w-full bg-slate-900 hover:bg-black text-white py-4 rounded-xl font-black text-lg shadow-lg transition-colors">랭킹 등록하기</button>
+                        <button onclick="startGame()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-black text-lg shadow-lg transition-colors">다시 도전</button>
+                        <button onclick="location.reload()" class="text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:text-slate-600 transition-colors mt-2 p-2">메인으로 돌아가기</button>
                     </div>
                 </div>
             </div>
 
             <!-- 하단 액션 버튼 (오답 시 숨김 처리됨) -->
+            <!-- 하단 액션 버튼 (오답 시 숨김 처리됨) -->
             <button id="mobile-action-btn" class="hidden w-full max-w-[400px] py-5 mt-6 rounded-3xl text-white font-black text-xl btn-primary shadow-2xl" onclick="handleActionButton()">
                 정답 확인
             </button>
         </main>
+    </div>
+
+    <!-- 랭킹 등록 다크 팝업 -->
+    <div id="register-popup" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex-col items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-[2rem] p-8 w-full max-w-[340px] flex flex-col items-center shadow-2xl transform transition-all">
+            <div class="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center mb-4">
+                <span class="text-3xl">🏆</span>
+            </div>
+            <h3 class="text-white font-black text-2xl mb-1 tracking-tight">NEW RECORD</h3>
+            <p class="text-indigo-400 font-bold mb-6 text-sm">최종 기록: <span id="popup-score" class="text-white text-lg ml-1">0</span> PTS</p>
+            
+            <input type="text" id="user-name" maxlength="10" placeholder="NICKNAME" class="w-full py-4 bg-slate-800 text-white rounded-xl text-center font-black text-lg border-2 border-slate-700 focus:border-indigo-500 transition-colors mb-4 placeholder-slate-500 outline-none">
+            
+            <button onclick="submitScore()" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-black text-lg shadow-lg transition-colors mb-3">등록하기</button>
+            <button onclick="closeRegisterPopup()" class="text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:text-white transition-colors p-3">취소하고 메인으로</button>
+        </div>
     </div>
 
     <script>
@@ -316,7 +328,8 @@
             const dist = Math.sqrt(Math.pow(targetColor.r-userRgb.r,2)+Math.pow(targetColor.g-userRgb.g,2)+Math.pow(targetColor.b-userRgb.b,2));
             const similarity = Math.max(0, 100 - (dist / 441.67 * 100));
 
-            showResult(similarity, userRgb, similarity < 85);
+            // 성공 판정 기준을 70%로 완화
+            showResult(similarity, userRgb, similarity < 70);
         }
 
         function createGaugeHTML(label, target, user, bgClass) {
@@ -379,18 +392,16 @@
                 gameOverScore.classList.remove('hidden'); // 최종 점수 노출
                 
                 gameOverActions.classList.remove('hidden');
-                gameOverActions.classList.add('flex'); // 게임오버 메뉴(등록/재도전) 노출
+                gameOverActions.classList.add('flex'); // 게임오버 메뉴 노출
                 
-                const reg = document.getElementById('rank-register-area');
-                const low = document.getElementById('low-score-msg');
+                const btnReg = document.getElementById('btn-register-popup');
                 
                 if(score > 0) { 
-                    reg.classList.remove('hidden'); reg.classList.add('flex');
-                    low.classList.add('hidden'); 
-                    setTimeout(() => document.getElementById('user-name').focus(), 100);
+                    btnReg.classList.remove('hidden'); 
+                    // 0.6초 뒤에 랭킹 등록 다크 팝업 자동 호출
+                    setTimeout(() => openRegisterPopup(), 600);
                 } else { 
-                    reg.classList.add('hidden'); reg.classList.remove('flex');
-                    low.classList.remove('hidden'); 
+                    btnReg.classList.add('hidden'); 
                 }
             } else {
                 // 정답 맞췄을 때 상태 처리
@@ -402,13 +413,27 @@
                 actionBtn.classList.remove('hidden');
                 actionBtn.innerText = "다음 문제";
                 
-                if(sim >= 98) { badge.innerText = "PERFECT"; badge.className = "text-4xl font-black italic mb-1 text-emerald-500 tracking-tighter"; score += 20; }
-                else if(sim >= 94) { badge.innerText = "GREAT"; badge.className = "text-4xl font-black italic mb-1 text-indigo-500 tracking-tighter"; score += 10; }
+                if(sim >= 95) { badge.innerText = "PERFECT"; badge.className = "text-4xl font-black italic mb-1 text-emerald-500 tracking-tighter"; score += 20; }
+                else if(sim >= 85) { badge.innerText = "GREAT"; badge.className = "text-4xl font-black italic mb-1 text-indigo-500 tracking-tighter"; score += 10; }
                 else { badge.innerText = "GOOD"; badge.className = "text-4xl font-black italic mb-1 text-blue-500 tracking-tighter"; score += 5; }
             }
             
             document.getElementById('score-display').innerText = score;
             document.activeElement.blur();
+        }
+
+        function openRegisterPopup() {
+            document.getElementById('popup-score').innerText = score;
+            const popup = document.getElementById('register-popup');
+            popup.classList.remove('hidden');
+            popup.classList.add('flex');
+            setTimeout(() => document.getElementById('user-name').focus(), 100);
+        }
+
+        function closeRegisterPopup() {
+            const popup = document.getElementById('register-popup');
+            popup.classList.add('hidden');
+            popup.classList.remove('flex');
         }
 
         async function submitScore() {
@@ -450,16 +475,26 @@
 
         window.onload = async () => {
             const isSafe = await checkSecurity();
-            if(isSafe) fetchRankings();
+            if(isSafe) {
+                fetchRankings();
+                // 5초마다 실시간 랭킹 갱신
+                setInterval(fetchRankings, 5000);
+            }
         };
 
         window.addEventListener('keydown', (e) => { 
             if(e.key === 'Enter') {
-                if (isResultState && isFailed) {
+                const popup = document.getElementById('register-popup');
+                // 팝업이 열려있을 때 엔터 누르면 랭킹 등록
+                if (!popup.classList.contains('hidden')) {
                     const nameInput = document.getElementById('user-name');
                     if(document.activeElement === nameInput && nameInput.value.trim() !== '') {
                         submitScore();
-                    } else if (score === 0) {
+                    }
+                } 
+                // 팝업이 안 열려있고 게임 오버 상태일 때 엔터 누르면 동작 제어
+                else if (isResultState && isFailed) {
+                    if (score === 0) {
                         startGame();
                     }
                 } else {
