@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>절대색감</title>
+    <title>절대색감 - Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
@@ -50,30 +50,32 @@
             padding: 24px; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
+        /* 모드 스위처 */
+        .mode-switcher {
+            display: flex; background: #f1f5f9; border-radius: 1rem; padding: 4px; margin-bottom: 12px;
+        }
+        .mode-tab {
+            flex: 1; padding: 8px; border-radius: 0.8rem; font-size: 11px; font-weight: 800;
+            color: #94a3b8; transition: all 0.2s;
+        }
+        .mode-tab.active { background: white; color: #4f46e5; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
         #target-color-box {
             width: 100%; height: 140px; border-radius: 2rem;
             margin: 15px 0; border: 8px solid #f1f5f9; position: relative;
             overflow: hidden;
         }
 
-        #anti-capture-overlay {
-            position: absolute; inset: 0; background: #0f172a;
-            display: none; z-index: 100; justify-content: center; align-items: center;
-            color: white; font-weight: 800; font-size: 14px; text-align: center;
-            border-radius: 1.5rem;
-        }
-
-        .rank-item {
-            display: flex; justify-content: space-between; padding: 12px 16px;
-            background: #f8fafc; border-radius: 16px; margin-bottom: 8px;
-            font-size: 14px; font-weight: 700; border: 1px solid #f1f5f9;
+        #ban-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            color: #ef4444; font-weight: 900; text-align: center;
         }
 
         .btn-gradient {
             background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
         }
 
-        /* 액션 버튼 스타일 */
         #mobile-action-btn {
             width: 100%; max-width: 400px; padding: 18px 0;
             border-radius: 1.5rem; color: white; font-weight: 900; font-size: 1.25rem;
@@ -81,30 +83,30 @@
             box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
             transition: all 0.2s; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        #mobile-action-btn:active { transform: scale(0.95); opacity: 0.8; }
+        #mobile-action-btn:active { transform: scale(0.95); }
 
-        .diff-tag { font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; }
-        input { -webkit-appearance: none; outline: none !important; }
+        input { outline: none !important; -webkit-appearance: none; }
         input:focus { border-color: #6366f1 !important; background: #f5f3ff !important; }
         .hidden { display: none !important; }
-        
-        @keyframes softBlink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-        .animate-soft-blink { animation: softBlink 2s ease-in-out infinite; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-in { animation: fadeIn 0.4s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <div id="bg-layer"></div>
     <div id="security-noise"></div>
 
+    <!-- 밴 오버레이 -->
+    <div id="ban-overlay">
+        <span class="text-6xl mb-4">🚫</span>
+        <h1 class="text-2xl mb-2 tracking-tighter">접근 제한됨</h1>
+        <p class="text-sm font-medium opacity-50 px-10">비정상적인 활동이 감지되어<br>해당 기기의 접속이 차단되었습니다.</p>
+        <p id="ban-device-id" class="mt-8 text-[10px] font-mono opacity-30 uppercase"></p>
+    </div>
+
     <div id="viewport-root">
         <div id="top-toolbar">
-            <div class="flex items-center gap-2 text-white logo-clickable" onclick="goHome()">
+            <div class="flex items-center gap-2 text-white logo-clickable" onclick="location.reload()">
                 <div class="w-8 h-8 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
                     <div class="w-4 h-4 bg-white rounded-full"></div>
                 </div>
@@ -117,295 +119,260 @@
         </div>
 
         <div class="main-stage">
+            <!-- 메인 홈 -->
             <div id="home-view" class="main-card animate-in">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-black text-slate-900 tracking-tighter">RANKING BOARD</h2>
-                    <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em] mt-1">Top 10 Color Masters</p>
+                    <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em] mt-1">Top Masters</p>
                 </div>
-                <div id="ranking-list" class="min-h-[260px] max-h-[300px] overflow-y-auto pr-1">
-                    <p id="rank-loading-text" class="text-center text-slate-400 py-20 font-bold">데이터 로딩 중...</p>
+                <div id="ranking-list" class="min-h-[260px] max-h-[300px] overflow-y-auto space-y-2 pr-1">
+                    <p class="text-center text-slate-400 py-20 font-bold">보안 연결 중...</p>
                 </div>
-                <button onclick="startGame()" class="w-full btn-gradient text-white py-5 rounded-[1.5rem] font-black text-xl mt-6 active:scale-95 transition-transform">
-                    START CHALLENGE
+                <button id="start-btn" onclick="startGame()" disabled class="w-full btn-gradient text-white py-5 rounded-[1.5rem] font-black text-xl mt-6 opacity-50 cursor-not-allowed transition-all">
+                    접속 대기 중
                 </button>
             </div>
 
+            <!-- 게임 화면 -->
             <div id="game-view" class="main-card hidden animate-in">
-                <div id="anti-capture-overlay">
-                    <div><p class="text-3xl mb-2">🔒</p><p>보안을 위해<br>색상이 가려졌습니다</p></div>
-                </div>
-                <div class="text-center w-full">
-                    <p class="text-indigo-500 text-[10px] font-extrabold uppercase tracking-[0.2em] mb-1">Target Color</p>
-                    <h2 class="text-lg font-black text-slate-900 leading-tight">이 색은 무엇일까요?</h2>
+                <div class="mode-switcher">
+                    <button id="tab-rgb" onclick="switchMode('RGB')" class="mode-tab active">RGB MODE</button>
+                    <button id="tab-hex" onclick="switchMode('HEX')" class="mode-tab">HEX MODE</button>
                 </div>
                 <div id="target-color-box"></div>
                 
                 <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[2.5rem] flex flex-col items-center justify-center p-8 z-30">
                     <div id="status-badge" class="text-4xl font-black italic mb-2">GREAT!</div>
-                    <div id="similarity-text" class="text-slate-900 font-extrabold text-2xl mb-4">98.5%</div>
-                    <div id="diff-analysis" class="w-full space-y-3 bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100 mb-6"></div>
-                    <p class="text-[10px] font-bold text-indigo-400 animate-soft-blink uppercase tracking-widest">Click Continue to next stage</p>
+                    <div id="similarity-text" class="text-slate-900 font-extrabold text-2xl mb-4">0%</div>
+                    <div id="diff-analysis" class="w-full space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-100 font-bold text-xs text-slate-500"></div>
+                    <p class="text-[10px] font-bold text-indigo-400 animate-pulse uppercase tracking-widest mt-4">Click to Continue</p>
                 </div>
 
-                <div class="w-full">
-                    <div class="flex gap-2">
-                        <input type="number" id="input-r" placeholder="R" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 transition-all" inputmode="numeric" oninput="handleInput(this, 'input-g')">
-                        <input type="number" id="input-g" placeholder="G" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 transition-all" inputmode="numeric" oninput="handleInput(this, 'input-b')">
-                        <input type="number" id="input-b" placeholder="B" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 transition-all" inputmode="numeric" oninput="handleInput(this, null)">
+                <div id="input-container" class="w-full">
+                    <!-- RGB 입력 -->
+                    <div id="input-rgb-area" class="flex gap-2">
+                        <input type="number" id="input-r" placeholder="R" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100" oninput="handleRgbInput(this, 'input-g')">
+                        <input type="number" id="input-g" placeholder="G" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100" oninput="handleRgbInput(this, 'input-b')">
+                        <input type="number" id="input-b" placeholder="B" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100" oninput="handleRgbInput(this, null)">
+                    </div>
+                    <!-- HEX 입력 -->
+                    <div id="input-hex-area" class="hidden relative">
+                        <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-black text-2xl">#</span>
+                        <input type="text" id="input-hex" maxlength="6" placeholder="HEX CODE" class="w-full py-5 pl-14 bg-slate-50 rounded-2xl font-black text-2xl tracking-widest uppercase border-2 border-slate-100">
                     </div>
                 </div>
             </div>
 
-            <!-- 모바일 전용 액션 버튼 -->
             <button id="mobile-action-btn" class="hidden animate-in" onclick="handleActionButton()">
                 CHECK
             </button>
         </div>
     </div>
 
+    <!-- 종료 오버레이 -->
     <div id="overlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[1000] flex items-center justify-center hidden p-6">
         <div class="bg-white rounded-[3rem] p-10 max-w-sm w-full text-center shadow-2xl">
             <h2 class="text-4xl font-black text-slate-900 italic mb-2">GAME OVER</h2>
-            <p id="final-score-msg" class="text-indigo-600 font-black mb-8 text-2xl">0 P</p>
-            
+            <p id="final-score-msg" class="text-indigo-600 font-black mb-8 text-2xl">0 PTS</p>
             <div id="rank-register-area" class="mb-8 hidden">
-                <p class="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-widest">Top 5 기록 달성! 이름을 입력하세요</p>
-                <input type="text" id="user-name" maxlength="8" placeholder="NICKNAME" class="w-full py-4 bg-slate-50 rounded-2xl text-center font-black text-xl mb-4 border-2 border-slate-100 focus:border-indigo-500 transition-all">
-                <button onclick="submitScore()" id="submit-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg active:scale-95 transition-transform">REGISTER RANK</button>
+                <input type="text" id="user-name" maxlength="10" placeholder="NICKNAME" class="w-full py-4 bg-slate-50 rounded-2xl text-center font-black text-xl mb-4 border-2 border-slate-100">
+                <button onclick="submitScore()" id="submit-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg">RANK IN</button>
             </div>
-            
             <div id="low-score-msg" class="mb-8 hidden">
-                <p class="text-slate-400 font-bold text-sm mb-2">기록이 너무 낮아 랭킹에 등록할 수 없습니다.</p>
-                <button onclick="startGame()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg mb-4 active:scale-95 transition-transform">RESTART</button>
+                <button onclick="startGame()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg mb-4">RESTART</button>
             </div>
-            
-            <button onclick="goHome()" class="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] hover:text-slate-600">Back to Main Menu</button>
+            <button onclick="location.reload()" class="text-slate-400 font-bold text-xs uppercase tracking-widest">Main Menu</button>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxlDOHpgNjYSszvAGzc7_Vw7sS7E5bknkVvhhCQn8bGgpUkqoNgCRmSyIPYDG0r63-4Vg/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbykOuF-DPpiMJwEPpic-4RYQk2OAAyMETIP90cnBdZ81QrtbJPceUCV0OwCgwX8RSc7og/exec";
         
-        let targetColor = { r: 0, g: 0, b: 0 };
+        let targetColor = { r: 0, g: 0, b: 0, hex: "" };
+        let currentMode = "RGB";
         let score = 0;
         let isResultState = false;
-        let top5Score = 0;
-        let userIpSuffix = "";
-        let rankingUpdateInterval = null;
-        let isFirstLoad = true;
+        let deviceId = "";
 
-        async function fetchIp() {
-            try {
-                const res = await fetch('https://api.ipify.org?format=json');
-                const data = await res.json();
-                const parts = data.ip.split('.');
-                userIpSuffix = `(${parts[0]}.${parts[1]})`;
-            } catch(e) { userIpSuffix = "(?.?)"; }
+        // 기기 지문 생성 (브라우저 특성 결합)
+        function getDeviceId() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = "top"; ctx.font = "12px Arial";
+            ctx.fillText(navigator.userAgent + screen.width + screen.height, 2, 2);
+            let hash = 0;
+            const str = canvas.toDataURL();
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            return "CID-" + Math.abs(hash).toString(36).toUpperCase();
         }
 
-        window.addEventListener('blur', () => {
-            if(!document.getElementById('game-view').classList.contains('hidden')) {
-                document.getElementById('anti-capture-overlay').style.display = 'flex';
-            }
-        });
-        window.addEventListener('focus', () => {
-            document.getElementById('anti-capture-overlay').style.display = 'none';
-        });
-
-        window.onload = () => { 
-            fetchRankings();
-            fetchIp();
-            rankingUpdateInterval = setInterval(() => {
-                if(!document.getElementById('home-view').classList.contains('hidden')) {
-                    fetchRankings();
+        // 보안 체크 (IP/Device Ban)
+        async function securityCheck() {
+            deviceId = getDeviceId();
+            try {
+                const res = await fetch(`${API_URL}?action=checkBan&deviceId=${deviceId}`);
+                const data = await res.json();
+                if(data.banned) {
+                    document.getElementById('ban-overlay').style.display = 'flex';
+                    document.getElementById('ban-device-id').innerText = `DEVICE ID: ${deviceId}`;
+                    return;
                 }
-            }, 5000);
-        };
+                // 접속 허용 시 메인 버튼 활성화
+                const btn = document.getElementById('start-btn');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.innerText = "START CHALLENGE";
+                fetchRankings();
+            } catch(e) {
+                // 서버 오류 시에도 일단 시작 가능하게 (UX)
+                document.getElementById('start-btn').disabled = false;
+                document.getElementById('start-btn').innerText = "START (LOCAL)";
+            }
+        }
 
         async function fetchRankings() {
-            const listDiv = document.getElementById('ranking-list');
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
-                
-                if(data.length >= 5) top5Score = data[4].score;
-                else top5Score = 0;
+                const listDiv = document.getElementById('ranking-list');
+                listDiv.innerHTML = data.map((r, i) => `
+                    <div class="flex justify-between items-center p-3 px-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="font-bold text-slate-800"><span class="text-indigo-500 mr-2">#${i+1}</span> ${r.name}</span>
+                        <span class="font-black text-slate-400 text-sm">${r.score}</span>
+                    </div>
+                `).join('') || '<p class="text-center text-slate-300 py-10 font-bold text-xs">NO RECORDS</p>';
+            } catch(e) {}
+        }
 
-                const newListHtml = data.map((r, i) => {
-                    const aniClass = isFirstLoad ? 'animate-in' : '';
-                    const aniDelay = isFirstLoad ? `style="animation-delay: ${i * 0.05}s"` : '';
-                    return `
-                        <div class="rank-item ${aniClass}" ${aniDelay}>
-                            <span><span class="text-indigo-500 mr-2">#${i+1}</span> ${r.name}</span>
-                            <span class="text-slate-400 font-black">${r.score}</span>
-                        </div>
-                    `;
-                }).join('');
-                
-                const loadingText = document.getElementById('rank-loading-text');
-                if(loadingText) loadingText.remove();
-                
-                listDiv.innerHTML = newListHtml;
-                if(data.length === 0) listDiv.innerHTML = '<p class="text-center text-slate-400 py-20 font-bold">첫 번째 랭커가 되어보세요!</p>';
-                
-                isFirstLoad = false;
-            } catch(e) { console.error("랭킹 로드 오류"); }
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('tab-rgb').classList.toggle('active', mode === 'RGB');
+            document.getElementById('tab-hex').classList.toggle('active', mode === 'HEX');
+            document.getElementById('input-rgb-area').classList.toggle('hidden', mode === 'HEX');
+            document.getElementById('input-hex-area').classList.toggle('hidden', mode === 'RGB');
+            if(!isResultState) {
+                if(mode === 'RGB') document.getElementById('input-r').focus();
+                else document.getElementById('input-hex').focus();
+            }
         }
 
         function startGame() {
             score = 0;
             document.getElementById('score-display').innerText = "0";
             document.getElementById('home-view').classList.add('hidden');
-            document.getElementById('overlay').classList.add('hidden');
             document.getElementById('game-view').classList.remove('hidden');
             document.getElementById('mobile-action-btn').classList.remove('hidden');
             generateNewColor();
         }
 
-        function goHome() {
-            document.getElementById('overlay').classList.add('hidden');
-            document.getElementById('game-view').classList.add('hidden');
-            document.getElementById('mobile-action-btn').classList.add('hidden');
-            document.getElementById('home-view').classList.remove('hidden');
-            fetchRankings();
-        }
-
         function generateNewColor() {
             isResultState = false;
-            targetColor = { 
-                r: Math.floor(Math.random()*256), 
-                g: Math.floor(Math.random()*256), 
-                b: Math.floor(Math.random()*256) 
-            };
-            document.getElementById('target-color-box').style.backgroundColor = `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`;
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            targetColor = { r, g, b, hex: rgbToHex(r, g, b) };
+            
+            document.getElementById('target-color-box').style.backgroundColor = targetColor.hex;
             document.getElementById('result-panel').classList.add('hidden');
             document.getElementById('mobile-action-btn').innerText = "CHECK";
-            document.getElementById('input-r').value = ''; 
-            document.getElementById('input-g').value = ''; 
-            document.getElementById('input-b').value = '';
-            document.getElementById('input-r').focus();
+            
+            ['input-r', 'input-g', 'input-b', 'input-hex'].forEach(id => document.getElementById(id).value = '');
+            setTimeout(() => {
+                if(currentMode === 'RGB') document.getElementById('input-r').focus();
+                else document.getElementById('input-hex').focus();
+            }, 100);
         }
 
-        // 입력 헬퍼: 3글자 입력 시 다음 칸 이동
-        function handleInput(el, nextId) {
+        function handleRgbInput(el, nextId) {
             if(el.value.length >= 3) {
                 if(parseInt(el.value) > 255) el.value = "255";
                 if(nextId) document.getElementById(nextId).focus();
             }
         }
 
-        // 모바일 액션 버튼 핸들러
         function handleActionButton() {
-            if(isResultState) {
-                generateNewColor();
-            } else {
-                checkAnswer();
-            }
+            if(isResultState) generateNewColor();
+            else checkAnswer();
         }
 
         function checkAnswer() {
-            const r = parseInt(document.getElementById('input-r').value) || 0;
-            const g = parseInt(document.getElementById('input-g').value) || 0;
-            const b = parseInt(document.getElementById('input-b').value) || 0;
+            let userRgb;
+            if(currentMode === "RGB") {
+                userRgb = {
+                    r: parseInt(document.getElementById('input-r').value) || 0,
+                    g: parseInt(document.getElementById('input-g').value) || 0,
+                    b: parseInt(document.getElementById('input-b').value) || 0
+                };
+            } else {
+                userRgb = hexToRgb(document.getElementById('input-hex').value);
+            }
 
-            const dist = Math.sqrt(Math.pow(targetColor.r-r,2) + Math.pow(targetColor.g-g,2) + Math.pow(targetColor.b-b,2));
+            const dist = Math.sqrt(Math.pow(targetColor.r-userRgb.r,2)+Math.pow(targetColor.g-userRgb.g,2)+Math.pow(targetColor.b-userRgb.b,2));
             const similarity = Math.max(0, 100 - (dist / 441.67 * 100));
 
-            if(similarity < 75) gameOver();
-            else showResult(similarity, r, g, b);
+            if(similarity < 80) gameOver();
+            else showResult(similarity, userRgb);
         }
 
-        function gameOver() {
-            document.getElementById('overlay').classList.remove('hidden');
-            document.getElementById('final-score-msg').innerText = `${score} POINTS`;
-            
-            const registerArea = document.getElementById('rank-register-area');
-            const lowScoreMsg = document.getElementById('low-score-msg');
-            
-            if(score > 0 && score > top5Score) {
-                registerArea.classList.remove('hidden');
-                lowScoreMsg.classList.add('hidden');
-                document.getElementById('user-name').focus();
-            } else {
-                registerArea.classList.add('hidden');
-                lowScoreMsg.classList.remove('hidden');
-            }
-            document.getElementById('mobile-action-btn').classList.add('hidden');
-        }
-
-        function showResult(sim, r, g, b) {
+        function showResult(sim, userRgb) {
             isResultState = true;
             const panel = document.getElementById('result-panel');
             panel.classList.remove('hidden');
             document.getElementById('similarity-text').innerText = `${sim.toFixed(1)}%`;
             document.getElementById('mobile-action-btn').innerText = "CONTINUE";
             
+            document.getElementById('diff-analysis').innerHTML = `
+                <div class="flex justify-between"><span>TARGET</span> <span>R${targetColor.r} G${targetColor.g} B${targetColor.b}</span></div>
+                <div class="flex justify-between text-indigo-600"><span>YOURS</span> <span>R${userRgb.r} G${userRgb.g} B${userRgb.b}</span></div>
+            `;
+
             const badge = document.getElementById('status-badge');
             if(sim >= 98) { badge.innerText = "PERFECT"; badge.className = "text-4xl font-black italic mb-2 text-emerald-500"; score += 20; }
-            else if(sim >= 93) { badge.innerText = "GREAT"; badge.className = "text-4xl font-black italic mb-2 text-indigo-500"; score += 10; }
-            else if(sim >= 85) { badge.innerText = "GOOD"; badge.className = "text-4xl font-black italic mb-2 text-blue-500"; score += 5; }
-            else { badge.innerText = "SO SO"; badge.className = "text-4xl font-black italic mb-2 text-amber-500"; score += 2; }
+            else if(sim >= 94) { badge.innerText = "GREAT"; badge.className = "text-4xl font-black italic mb-2 text-indigo-500"; score += 10; }
+            else { badge.innerText = "GOOD"; badge.className = "text-4xl font-black italic mb-2 text-blue-500"; score += 5; }
             
             document.getElementById('score-display').innerText = score;
-
-            const getDiffTag = (v) => {
-                if(v > 0) return `<span class="diff-tag bg-red-100 text-red-600">+${v}</span>`;
-                if(v < 0) return `<span class="diff-tag bg-blue-100 text-blue-600">${v}</span>`;
-                return `<span class="diff-tag bg-slate-100 text-slate-400">0</span>`;
-            };
-
-            document.getElementById('diff-analysis').innerHTML = `
-                <div class="space-y-2">
-                    <div class="flex justify-between items-center"><span class="text-[10px] font-black text-slate-400">RED</span><div class="flex items-center gap-2"><span class="font-bold">${targetColor.r}</span>${getDiffTag(r-targetColor.r)}</div></div>
-                    <div class="flex justify-between items-center"><span class="text-[10px] font-black text-slate-400">GREEN</span><div class="flex items-center gap-2"><span class="font-bold">${targetColor.g}</span>${getDiffTag(g-targetColor.g)}</div></div>
-                    <div class="flex justify-between items-center"><span class="text-[10px] font-black text-slate-400">BLUE</span><div class="flex items-center gap-2"><span class="font-bold">${targetColor.b}</span>${getDiffTag(b-targetColor.b)}</div></div>
-                </div>
-            `;
             document.activeElement.blur();
         }
 
-        async function submitScore() {
-            let name = document.getElementById('user-name').value.trim();
-            if(!name) return;
-            
-            const fullName = name + " " + userIpSuffix;
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-            btn.innerText = "SAVING...";
-
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify({ name: fullName, score: score })
-                });
-                setTimeout(() => {
-                    isFirstLoad = false;
-                    fetchRankings(); 
-                    goHome();
-                }, 800);
-            } catch(e) {
-                btn.disabled = false;
-                btn.innerText = "TRY AGAIN";
-            }
+        function gameOver() {
+            document.getElementById('overlay').classList.remove('hidden');
+            document.getElementById('final-score-msg').innerText = `${score} PTS`;
+            const reg = document.getElementById('rank-register-area');
+            const low = document.getElementById('low-score-msg');
+            if(score > 0) { reg.classList.remove('hidden'); low.classList.add('hidden'); }
+            else { reg.classList.add('hidden'); low.classList.remove('hidden'); }
+            document.getElementById('mobile-action-btn').classList.add('hidden');
         }
 
-        window.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter') {
-                if(!document.getElementById('overlay').classList.contains('hidden')) {
-                    const registerArea = document.getElementById('rank-register-area');
-                    if(!registerArea.classList.contains('hidden')) {
-                        if(document.activeElement.id === 'user-name') submitScore();
-                    } else {
-                        startGame();
-                    }
-                    return;
-                }
-                if(!document.getElementById('game-view').classList.contains('hidden')) {
-                    handleActionButton();
-                }
-            }
-        });
+        async function submitScore() {
+            const name = document.getElementById('user-name').value.trim();
+            if(!name) return;
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true; btn.innerText = "SAVING...";
+            try {
+                await fetch(API_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ name, score, device: deviceId }) 
+                });
+                location.reload();
+            } catch(e) { btn.disabled = false; btn.innerText = "RETRY"; }
+        }
+
+        function rgbToHex(r, g, b) { return "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase(); }
+        function hexToRgb(hex) {
+            hex = hex.replace('#', '');
+            if(hex.length === 3) hex = hex.split('').map(s => s + s).join('');
+            const bigint = parseInt(hex, 16) || 0;
+            return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+        }
+
+        window.addEventListener('keydown', (e) => { if(e.key === 'Enter') handleActionButton(); });
+        window.onload = securityCheck;
     </script>
 </body>
 </html>
