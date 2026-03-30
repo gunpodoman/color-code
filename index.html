@@ -77,7 +77,6 @@
         input { -webkit-appearance: none; outline: none !important; }
         .hidden { display: none !important; }
         
-        /* 은은한 깜빡임 애니메이션 (정신사납지 않게) */
         @keyframes softBlink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.4; }
@@ -107,21 +106,19 @@
         </div>
 
         <div class="main-stage">
-            <!-- [HOME] -->
             <div id="home-view" class="main-card animate-in">
                 <div class="text-center mb-6">
                     <h2 class="text-2xl font-black text-slate-900 tracking-tighter">RANKING BOARD</h2>
                     <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em] mt-1">Top 10 Color Masters</p>
                 </div>
                 <div id="ranking-list" class="min-h-[260px] max-h-[300px] overflow-y-auto pr-1">
-                    <p class="text-center text-slate-400 py-20 font-bold">데이터 로딩 중...</p>
+                    <p id="rank-loading-text" class="text-center text-slate-400 py-20 font-bold">데이터 로딩 중...</p>
                 </div>
                 <button onclick="startGame()" class="w-full btn-gradient text-white py-5 rounded-[1.5rem] font-black text-xl mt-6 active:scale-95 transition-transform">
                     START CHALLENGE
                 </button>
             </div>
 
-            <!-- [GAME] -->
             <div id="game-view" class="main-card hidden animate-in">
                 <div id="anti-capture-overlay">
                     <div><p class="text-3xl mb-2">🔒</p><p>보안을 위해<br>색상이 가려졌습니다</p></div>
@@ -150,7 +147,6 @@
         </div>
     </div>
 
-    <!-- 게임오버 모달 -->
     <div id="overlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[1000] flex items-center justify-center hidden p-6">
         <div class="bg-white rounded-[3rem] p-10 max-w-sm w-full text-center shadow-2xl">
             <h2 class="text-4xl font-black text-slate-900 italic mb-2">GAME OVER</h2>
@@ -180,17 +176,15 @@
         let top5Score = 0;
         let userIpSuffix = "";
         let rankingUpdateInterval = null;
+        let isFirstLoad = true; // 초기 로딩 플래그
 
-        // IP 가져오기 (디시인사이드 스타일)
         async function fetchIp() {
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
                 const data = await res.json();
                 const parts = data.ip.split('.');
                 userIpSuffix = `(${parts[0]}.${parts[1]})`;
-            } catch(e) {
-                userIpSuffix = "(?.?)";
-            }
+            } catch(e) { userIpSuffix = "(?.?)"; }
         }
 
         window.addEventListener('blur', () => {
@@ -205,7 +199,6 @@
         window.onload = () => { 
             fetchRankings();
             fetchIp();
-            // 5초마다 랭킹 실시간 업데이트 시작
             rankingUpdateInterval = setInterval(() => {
                 if(!document.getElementById('home-view').classList.contains('hidden')) {
                     fetchRankings();
@@ -219,22 +212,29 @@
                 const res = await fetch(API_URL);
                 const data = await res.json();
                 
-                if(data.length >= 5) {
-                    top5Score = data[4].score;
-                } else {
-                    top5Score = 0;
-                }
+                if(data.length >= 5) top5Score = data[4].score;
+                else top5Score = 0;
 
-                listDiv.innerHTML = data.map((r, i) => `
-                    <div class="rank-item animate-in" style="animation-delay: ${i * 0.05}s">
-                        <span><span class="text-indigo-500 mr-2">#${i+1}</span> ${r.name}</span>
-                        <span class="text-slate-400 font-black">${r.score}</span>
-                    </div>
-                `).join('');
+                const newListHtml = data.map((r, i) => {
+                    const aniClass = isFirstLoad ? 'animate-in' : '';
+                    const aniDelay = isFirstLoad ? `style="animation-delay: ${i * 0.05}s"` : '';
+                    return `
+                        <div class="rank-item ${aniClass}" ${aniDelay}>
+                            <span><span class="text-indigo-500 mr-2">#${i+1}</span> ${r.name}</span>
+                            <span class="text-slate-400 font-black">${r.score}</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                // 데이터 교체 시점에 로딩 텍스트 제거 및 HTML 업데이트
+                const loadingText = document.getElementById('rank-loading-text');
+                if(loadingText) loadingText.remove();
+                
+                listDiv.innerHTML = newListHtml;
                 if(data.length === 0) listDiv.innerHTML = '<p class="text-center text-slate-400 py-20 font-bold">첫 번째 랭커가 되어보세요!</p>';
-            } catch(e) {
-                console.error("랭킹 로드 오류");
-            }
+                
+                isFirstLoad = false; // 첫 로드 완료 후 애니메이션 플래그 해제
+            } catch(e) { console.error("랭킹 로드 오류"); }
         }
 
         function startGame() {
@@ -249,7 +249,7 @@
             document.getElementById('overlay').classList.add('hidden');
             document.getElementById('game-view').classList.add('hidden');
             document.getElementById('home-view').classList.remove('hidden');
-            fetchRankings(); // 홈으로 올 때 즉시 갱신
+            fetchRankings();
         }
 
         function generateNewColor() {
@@ -275,11 +275,8 @@
             const dist = Math.sqrt(Math.pow(targetColor.r-r,2) + Math.pow(targetColor.g-g,2) + Math.pow(targetColor.b-b,2));
             const similarity = Math.max(0, 100 - (dist / 441.67 * 100));
 
-            if(similarity < 75) {
-                gameOver();
-            } else {
-                showResult(similarity, r, g, b);
-            }
+            if(similarity < 75) gameOver();
+            else showResult(similarity, r, g, b);
         }
 
         function gameOver() {
@@ -344,8 +341,8 @@
                     mode: 'no-cors',
                     body: JSON.stringify({ name: fullName, score: score })
                 });
-                // 등록 성공 시 즉시 랭킹 갱신 및 홈으로
                 setTimeout(() => {
+                    isFirstLoad = false; // 수동 등록 후에는 애니메이션 없이 갱신
                     fetchRankings(); 
                     goHome();
                 }, 800);
@@ -357,23 +354,16 @@
 
         window.addEventListener('keydown', (e) => {
             if(e.key === 'Enter') {
-                // 게임 오버 모달이 떠 있을 때
                 if(!document.getElementById('overlay').classList.contains('hidden')) {
                     const registerArea = document.getElementById('rank-register-area');
-                    // 랭킹 등록 중이면 등록 실행
                     if(!registerArea.classList.contains('hidden')) {
-                        if(document.activeElement.id === 'user-name') {
-                            submitScore();
-                        }
+                        if(document.activeElement.id === 'user-name') submitScore();
                     } else {
-                        // 랭킹 미달이면 엔터 시 즉시 재시작
                         startGame();
                         document.getElementById('overlay').classList.add('hidden');
                     }
                     return;
                 }
-
-                // 게임 진행 중일 때
                 if(!document.getElementById('game-view').classList.contains('hidden')) {
                     if(isResultState) generateNewColor();
                     else checkAnswer();
