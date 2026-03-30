@@ -9,154 +9,94 @@
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
         
         html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #1e225e;
-            font-family: 'Pretendard', sans-serif;
-            touch-action: none;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background: #1e225e;
+            font-family: 'Pretendard', sans-serif; touch-action: none;
         }
 
-        /* 배경 레이어 - 절대 고정 */
         #bg-layer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #1e225e 0%, #2e3192 100%);
             z-index: -1;
         }
 
-        /* 커다란 원형 그라데이션 패턴 */
-        #bg-layer::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.05) 10%, transparent 10.1%),
-                radial-gradient(circle at 85% 15%, rgba(140, 49, 255, 0.1) 0%, rgba(140, 49, 255, 0.1) 15%, transparent 15.1%),
-                radial-gradient(circle at 50% 85%, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.04) 8%, transparent 8.1%),
-                radial-gradient(circle at 80% 80%, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.05) 12%, transparent 12.1%),
-                radial-gradient(circle at 25% 65%, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.03) 18%, transparent 18.1%);
-            background-size: 100% 100%;
-            pointer-events: none;
+        /* 보안용 노이즈 레이어 (매크로 방해) */
+        #security-noise {
+            position: absolute; inset: 0; opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 5;
         }
 
         #viewport-root {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            z-index: 10;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; z-index: 10;
         }
 
         #top-toolbar {
-            height: 60px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 24px;
-            flex-shrink: 0;
+            height: 60px; display: flex; justify-content: space-between;
+            align-items: center; padding: 0 24px; flex-shrink: 0;
         }
 
+        .logo-clickable { cursor: pointer; transition: transform 0.2s; }
+        .logo-clickable:active { transform: scale(0.95); }
+
         .main-stage {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 0;
-            gap: 20px;
-            overflow: hidden;
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 20px;
+            padding-bottom: 40px;
         }
 
         .main-card {
-            background: white;
-            border-radius: 2.5rem;
-            width: 88%;
-            max-width: 400px;
-            height: auto;
-            max-height: 55vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            padding: 24px;
-            position: relative;
-            transition: all 0.3s ease;
-            box-shadow: none;
+            background: white; border-radius: 2.5rem; width: 88%; max-width: 400px;
+            padding: 28px; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .color-box {
-            width: 100%;
-            flex: 1;
-            min-height: 140px;
-            border-radius: 2rem;
-            margin: 12px 0;
-            border: 6px solid #f8fafc;
-            box-shadow: none;
+        #target-color-box {
+            width: 100%; height: 180px; border-radius: 2rem;
+            margin: 20px 0; border: 8px solid #f1f5f9; position: relative;
+            overflow: hidden;
         }
 
-        .input-area {
-            width: 88%;
-            max-width: 400px;
-            flex-shrink: 0;
-            margin-bottom: 25px;
+        /* 보안 차단막 */
+        #anti-capture-overlay {
+            position: absolute; inset: 0; background: #0f172a;
+            display: none; z-index: 100; justify-content: center; align-items: center;
+            color: white; font-weight: 800; font-size: 14px; text-align: center;
+            border-radius: 1.5rem;
         }
 
-        /* 키보드 대응 */
-        .keyboard-active #top-toolbar { height: 0; opacity: 0; pointer-events: none; }
-        .keyboard-active .main-stage { justify-content: flex-start; padding-top: 20px; }
-        .keyboard-active .main-card { transform: scale(0.9); max-height: 38vh; }
-
-        input {
-            -webkit-appearance: none;
-            appearance: none;
-            border: none;
-            outline: none !important;
-            transition: all 0.2s;
-            box-shadow: none !important;
+        .rank-item {
+            display: flex; justify-content: space-between; padding: 12px 16px;
+            background: #f8fafc; border-radius: 16px; margin-bottom: 8px;
+            font-size: 14px; font-weight: 700; border: 1px solid #f1f5f9;
         }
 
         .btn-gradient {
-            background: linear-gradient(135deg, #8c31ff 0%, #7021d7 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
         }
 
-        .shake { animation: shake 0.5s both; }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        /* 오차값 강조 스타일 */
         .diff-tag {
-            font-size: 10px;
-            font-weight: 900;
-            padding: 2px 6px;
-            border-radius: 6px;
-            min-width: 35px;
-            text-align: center;
+            font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px;
         }
-        .diff-plus { background: #fee2e2; color: #ef4444; }
-        .diff-minus { background: #dbeafe; color: #3b82f6; }
-        .diff-zero { background: #f1f5f9; color: #94a3b8; }
+
+        input { -webkit-appearance: none; outline: none !important; }
+        .hidden { display: none !important; }
+        
+        /* 애니메이션 */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.4s ease forwards; }
     </style>
 </head>
 <body>
-    
     <div id="bg-layer"></div>
+    <div id="security-noise"></div>
 
     <div id="viewport-root">
+        <!-- 상단 툴바 -->
         <div id="top-toolbar">
-            <div class="flex items-center gap-2 text-white">
+            <div class="flex items-center gap-2 text-white logo-clickable" onclick="goHome()">
                 <div class="w-8 h-8 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center border border-white/30">
                     <div class="w-4 h-4 bg-white rounded-full"></div>
                 </div>
@@ -169,252 +109,240 @@
         </div>
 
         <div class="main-stage">
-            <div id="game-container" class="main-card">
-                <div class="text-center w-full">
-                    <p class="text-indigo-500 text-[10px] font-extrabold uppercase tracking-[0.2em] mb-1">Target Color</p>
-                    <h2 class="text-lg font-black text-slate-900 leading-tight">색상을 맞춰보세요</h2>
+            <!-- [HOME] 랭킹 화면 -->
+            <div id="home-view" class="main-card animate-in">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-black text-slate-900 tracking-tighter">RANKING BOARD</h2>
+                    <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em] mt-1">Top 10 Color Masters</p>
                 </div>
-
-                <div id="target-color-box" class="color-box"></div>
-
-                <!-- 결과 레이어 -->
-                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[2.5rem] flex flex-col items-center justify-center p-6 z-30">
-                    <div id="status-badge" class="text-3xl font-black italic mb-1 tracking-tighter">GREAT!</div>
-                    <div id="similarity-text" class="text-slate-900 font-extrabold text-xl mb-3">유사도: 98.5%</div>
-                    
-                    <!-- 정답 분석 영역 -->
-                    <div id="diff-analysis" class="w-full space-y-3 bg-slate-50 p-4 rounded-3xl border border-slate-100 mb-4">
-                        <!-- JS에서 동적 생성 -->
-                    </div>
-
-                    <div class="text-center">
-                        <p id="correct-answer-info" class="text-[11px] font-mono font-black text-slate-500 mb-1 uppercase"></p>
-                        <p class="text-[10px] font-bold text-indigo-500 animate-pulse uppercase tracking-widest">Press Enter to Next</p>
-                    </div>
+                <div id="ranking-list" class="min-h-[260px] max-h-[300px] overflow-y-auto pr-1">
+                    <p class="text-center text-slate-400 py-20 font-bold animate-pulse">데이터 로딩 중...</p>
                 </div>
-
-                <div class="w-full text-center">
-                    <p class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Type values & Press Enter</p>
-                </div>
+                <button onclick="startGame()" class="w-full btn-gradient text-white py-5 rounded-[1.5rem] font-black text-xl mt-6 active:scale-95 transition-transform">
+                    START CHALLENGE
+                </button>
             </div>
 
-            <!-- 하단 입력창 -->
-            <div class="input-area">
-                <div id="ui-rgb" class="flex w-full gap-3">
-                    <input type="number" id="input-r" min="0" max="255" placeholder="R" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 focus:ring-4 focus:ring-white/30" inputmode="numeric">
-                    <input type="number" id="input-g" min="0" max="255" placeholder="G" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 focus:ring-4 focus:ring-white/30" inputmode="numeric">
-                    <input type="number" id="input-b" min="0" max="255" placeholder="B" class="w-full py-5 bg-white rounded-[1.5rem] text-center font-black text-2xl text-slate-800 focus:ring-4 focus:ring-white/30" inputmode="numeric">
+            <!-- [GAME] 게임 화면 -->
+            <div id="game-view" class="main-card hidden animate-in">
+                <div id="anti-capture-overlay">
+                    <div>
+                        <p class="text-3xl mb-2">🔒</p>
+                        <p>보안을 위해<br>색상이 가려졌습니다</p>
+                    </div>
+                </div>
+                <div class="text-center w-full">
+                    <p class="text-indigo-500 text-[10px] font-extrabold uppercase tracking-[0.2em] mb-1">Target Color</p>
+                    <h2 class="text-lg font-black text-slate-900 leading-tight">이 색은 무엇일까요?</h2>
                 </div>
                 
-                <div id="ui-hex" class="hidden w-full relative">
-                    <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-black text-2xl">#</span>
-                    <input type="text" id="input-hex" maxlength="6" placeholder="FFFFFF" class="w-full py-5 pl-12 bg-white text-slate-800 rounded-[1.5rem] font-mono text-2xl uppercase font-black focus:ring-4 focus:ring-white/30">
+                <div id="target-color-box"></div>
+                
+                <!-- 결과 안내 레이어 -->
+                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[2.5rem] flex flex-col items-center justify-center p-8 z-30">
+                    <div id="status-badge" class="text-4xl font-black italic mb-2">GREAT!</div>
+                    <div id="similarity-text" class="text-slate-900 font-extrabold text-2xl mb-4">98.5%</div>
+                    
+                    <div id="diff-analysis" class="w-full space-y-3 bg-slate-50 p-5 rounded-[1.5rem] border border-slate-100 mb-6">
+                        <!-- 상세 분석 내용 -->
+                    </div>
+                    
+                    <p class="text-[10px] font-bold text-indigo-400 animate-bounce uppercase tracking-widest">Next Stage: Press Enter</p>
                 </div>
 
-                <div class="flex justify-center mt-6 gap-10">
-                    <button onclick="setMode('rgb')" id="mode-btn-rgb" class="text-[12px] font-black tracking-widest text-white uppercase border-b-4 border-white pb-0.5">RGB</button>
-                    <button onclick="setMode('hex')" id="mode-btn-hex" class="text-[12px] font-black tracking-widest text-white/40 uppercase pb-0.5">HEX</button>
+                <div class="w-full">
+                    <div class="flex gap-2">
+                        <input type="number" id="input-r" placeholder="R" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 focus:border-indigo-500 transition-colors" inputmode="numeric">
+                        <input type="number" id="input-g" placeholder="G" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 focus:border-indigo-500 transition-colors" inputmode="numeric">
+                        <input type="number" id="input-b" placeholder="B" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100 focus:border-indigo-500 transition-colors" inputmode="numeric">
+                    </div>
+                    <p class="text-center text-[9px] font-bold text-slate-300 uppercase mt-4 tracking-widest">Type RGB and Press Enter</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 게임 오버 -->
+    <!-- 게임오버 모달 -->
     <div id="overlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[1000] flex items-center justify-center hidden p-6">
-        <div class="bg-white rounded-[3rem] p-8 max-w-sm w-full text-center">
-            <h2 class="text-3xl font-black text-slate-900 mb-1 italic">GAME OVER</h2>
-            <p id="final-score-msg" class="text-indigo-600 font-black mb-6 text-lg">최종 점수: 0점</p>
-            <div id="gameover-analysis" class="space-y-2 mb-6 text-left"></div>
-            <button onclick="restartGame()" class="w-full btn-gradient text-white py-5 rounded-[2rem] font-black text-xl active:translate-y-1 border-b-4 border-black/20">RESTART</button>
+        <div class="bg-white rounded-[3rem] p-10 max-w-sm w-full text-center shadow-2xl">
+            <h2 class="text-4xl font-black text-slate-900 italic mb-2">GAME OVER</h2>
+            <p id="final-score-msg" class="text-indigo-600 font-black mb-8 text-2xl">0 P</p>
+            
+            <div id="rank-register-area" class="mb-8">
+                <p class="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-widest">랭킹에 이름을 등록하세요</p>
+                <input type="text" id="user-name" maxlength="8" placeholder="NICKNAME" class="w-full py-4 bg-slate-50 rounded-2xl text-center font-black text-xl mb-4 border-2 border-slate-100 focus:border-indigo-500 transition-all">
+                <button onclick="submitScore()" id="submit-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg active:scale-95 transition-transform">REGISTER RANK</button>
+            </div>
+            
+            <button onclick="goHome()" class="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] hover:text-slate-600 transition-colors">Back to Main Menu</button>
         </div>
     </div>
 
     <script>
-        let currentMode = 'rgb';
+        const API_URL = "https://script.google.com/macros/s/AKfycbxlDOHpgNjYSszvAGzc7_Vw7sS7E5bknkVvhhCQn8bGgpUkqoNgCRmSyIPYDG0r63-4Vg/exec";
+        
         let targetColor = { r: 0, g: 0, b: 0 };
         let score = 0;
         let isResultState = false;
-        const SIMILARITY_THRESHOLD = 75;
 
-        const viewportRoot = document.getElementById('viewport-root');
-        const targetBox = document.getElementById('target-color-box');
-        const scoreDisplay = document.getElementById('score-display');
-        const resultPanel = document.getElementById('result-panel');
-        const statusBadge = document.getElementById('status-badge');
-        const diffAnalysis = document.getElementById('diff-analysis');
-        const gameoverAnalysis = document.getElementById('gameover-analysis');
-        const correctAnswerInfo = document.getElementById('correct-answer-info');
-        const overlay = document.getElementById('overlay');
-        const similarityText = document.getElementById('similarity-text');
-
-        const inputR = document.getElementById('input-r');
-        const inputG = document.getElementById('input-g');
-        const inputB = document.getElementById('input-b');
-        const inputHex = document.getElementById('input-hex');
-
-        const syncLayout = () => {
-            const vv = window.visualViewport;
-            if (!vv) return;
-            viewportRoot.style.height = `${vv.height}px`;
-            viewportRoot.style.top = `${vv.offsetTop}px`;
-            if (vv.height < window.innerHeight * 0.8) document.body.classList.add('keyboard-active');
-            else document.body.classList.remove('keyboard-active');
-        };
-
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', syncLayout);
-            window.visualViewport.addEventListener('scroll', syncLayout);
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                if (overlay.classList.contains('hidden')) {
-                    if (isResultState) generateNewColor();
-                    else checkAnswer();
-                } else {
-                    restartGame();
-                }
+        // 보안: 화면 이탈 감지
+        window.addEventListener('blur', () => {
+            if(!document.getElementById('game-view').classList.contains('hidden')) {
+                document.getElementById('anti-capture-overlay').style.display = 'flex';
             }
         });
-
-        window.addEventListener('load', () => {
-            generateNewColor();
-            setMode('rgb');
-            syncLayout();
+        window.addEventListener('focus', () => {
+            document.getElementById('anti-capture-overlay').style.display = 'none';
         });
 
-        function setMode(mode) {
-            if(isResultState) return;
-            currentMode = mode;
-            document.getElementById('ui-rgb').classList.toggle('hidden', mode !== 'rgb');
-            document.getElementById('ui-hex').classList.toggle('hidden', mode !== 'hex');
-            document.getElementById('mode-btn-rgb').className = mode === 'rgb' ? "text-[12px] font-black tracking-widest text-white uppercase border-b-4 border-white pb-0.5" : "text-[12px] font-black tracking-widest text-white/40 uppercase pb-0.5";
-            document.getElementById('mode-btn-hex').className = mode === 'hex' ? "text-[12px] font-black tracking-widest text-white uppercase border-b-4 border-white pb-0.5" : "text-[12px] font-black tracking-widest text-white/40 uppercase pb-0.5";
-            if (mode === 'rgb') inputR.focus(); else inputHex.focus();
+        window.onload = () => { fetchRankings(); };
+
+        async function fetchRankings() {
+            const listDiv = document.getElementById('ranking-list');
+            try {
+                const res = await fetch(API_URL);
+                const data = await res.json();
+                listDiv.innerHTML = data.map((r, i) => `
+                    <div class="rank-item animate-in" style="animation-delay: ${i * 0.05}s">
+                        <span><span class="text-indigo-500 mr-2">#${i+1}</span> ${r.name}</span>
+                        <span class="text-slate-400 font-black">${r.score}</span>
+                    </div>
+                `).join('');
+                if(data.length === 0) listDiv.innerHTML = '<p class="text-center text-slate-400 py-20 font-bold">첫 번째 랭커가 되어보세요!</p>';
+            } catch(e) {
+                listDiv.innerHTML = '<p class="text-center text-red-400 py-20 font-bold">데이터를 가져오지 못했습니다.</p>';
+            }
+        }
+
+        function startGame() {
+            score = 0;
+            document.getElementById('score-display').innerText = "0";
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('game-view').classList.remove('hidden');
+            generateNewColor();
+        }
+
+        function goHome() {
+            document.getElementById('overlay').classList.add('hidden');
+            document.getElementById('game-view').classList.add('hidden');
+            document.getElementById('home-view').classList.remove('hidden');
+            fetchRankings();
         }
 
         function generateNewColor() {
             isResultState = false;
-            targetColor = {
-                r: Math.floor(Math.random() * 256),
-                g: Math.floor(Math.random() * 256),
-                b: Math.floor(Math.random() * 256)
+            targetColor = { 
+                r: Math.floor(Math.random()*256), 
+                g: Math.floor(Math.random()*256), 
+                b: Math.floor(Math.random()*256) 
             };
-            targetBox.style.backgroundColor = `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`;
-            resultPanel.classList.add('hidden');
-            [inputR, inputG, inputB, inputHex].forEach(el => { el.disabled = false; el.value = ''; });
-            if (currentMode === 'rgb') inputR.focus(); else inputHex.focus();
+            document.getElementById('target-color-box').style.backgroundColor = `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`;
+            document.getElementById('result-panel').classList.add('hidden');
+            document.getElementById('input-r').value = ''; 
+            document.getElementById('input-g').value = ''; 
+            document.getElementById('input-b').value = '';
+            document.getElementById('input-r').focus();
         }
 
         function checkAnswer() {
-            let userRgb;
-            if(currentMode === 'rgb') {
-                userRgb = {
-                    r: parseInt(inputR.value) || 0,
-                    g: parseInt(inputG.value) || 0,
-                    b: parseInt(inputB.value) || 0
-                };
+            const r = parseInt(document.getElementById('input-r').value) || 0;
+            const g = parseInt(document.getElementById('input-g').value) || 0;
+            const b = parseInt(document.getElementById('input-b').value) || 0;
+
+            const dist = Math.sqrt(Math.pow(targetColor.r-r,2) + Math.pow(targetColor.g-g,2) + Math.pow(targetColor.b-b,2));
+            const similarity = Math.max(0, 100 - (dist / 441.67 * 100));
+
+            if(similarity < 75) {
+                document.getElementById('overlay').classList.remove('hidden');
+                document.getElementById('final-score-msg').innerText = `${score} POINTS`;
+                document.getElementById('user-name').focus();
             } else {
-                const hex = inputHex.value.trim();
-                const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-                userRgb = result ? {
-                    r: parseInt(result[1], 16),
-                    g: parseInt(result[2], 16),
-                    b: parseInt(result[3], 16)
-                } : null;
+                showResult(similarity, r, g, b);
             }
-
-            if(!userRgb && currentMode === 'hex') {
-                document.getElementById('game-container').classList.add('shake');
-                setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 500);
-                return;
-            }
-
-            const distance = Math.sqrt(
-                Math.pow(targetColor.r - userRgb.r, 2) +
-                Math.pow(targetColor.g - userRgb.g, 2) +
-                Math.pow(targetColor.b - userRgb.b, 2)
-            );
-            const similarity = Math.max(0, 100 - (distance / 441.67 * 100));
-            const analysisHTML = generateAnalysisHTML(userRgb);
-            
-            if(similarity < SIMILARITY_THRESHOLD) gameOver(similarity, analysisHTML);
-            else showResult(similarity, analysisHTML);
         }
 
-        function generateAnalysisHTML(userRgb) {
-            const channels = [
-                { name: 'R', target: targetColor.r, user: userRgb.r, color: 'bg-red-500' },
-                { name: 'G', target: targetColor.g, user: userRgb.g, color: 'bg-green-500' },
-                { name: 'B', target: targetColor.b, user: userRgb.b, color: 'bg-blue-500' }
-            ];
-            return channels.map(c => {
-                const diff = c.user - c.target;
-                const absDiff = Math.abs(diff);
-                const barWidth = Math.max(0, 100 - (absDiff / 255 * 100));
-                
-                let diffClass = 'diff-zero';
-                let diffText = '0';
-                if (diff > 0) {
-                    diffClass = 'diff-plus';
-                    diffText = `+${diff}`;
-                } else if (diff < 0) {
-                    diffClass = 'diff-minus';
-                    diffText = `${diff}`;
-                }
+        function showResult(sim, r, g, b) {
+            isResultState = true;
+            const panel = document.getElementById('result-panel');
+            panel.classList.remove('hidden');
+            
+            const simText = document.getElementById('similarity-text');
+            simText.innerText = `${sim.toFixed(1)}%`;
+            
+            const badge = document.getElementById('status-badge');
+            if(sim >= 98) { badge.innerText = "PERFECT"; badge.className = "text-4xl font-black italic mb-2 text-emerald-500"; score += 20; }
+            else if(sim >= 93) { badge.innerText = "GREAT"; badge.className = "text-4xl font-black italic mb-2 text-indigo-500"; score += 10; }
+            else if(sim >= 85) { badge.innerText = "GOOD"; badge.className = "text-4xl font-black italic mb-2 text-blue-500"; score += 5; }
+            else { badge.innerText = "SO SO"; badge.className = "text-4xl font-black italic mb-2 text-amber-500"; score += 2; }
+            
+            document.getElementById('score-display').innerText = score;
 
-                return `
-                    <div class="flex items-center gap-3">
-                        <span class="w-4 font-black text-[10px] text-slate-400">${c.name}</span>
-                        <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                            <div class="${c.color} h-full transition-all duration-700" style="width: ${barWidth}%"></div>
-                        </div>
-                        <div class="flex items-center gap-2 min-w-[65px] justify-end">
-                            <span class="text-[10px] font-black text-slate-800">${c.target}</span>
-                            <span class="diff-tag ${diffClass}">${diffText}</span>
+            const getDiffTag = (v) => {
+                if(v > 0) return `<span class="diff-tag bg-red-100 text-red-600">+${v}</span>`;
+                if(v < 0) return `<span class="diff-tag bg-blue-100 text-blue-600">${v}</span>`;
+                return `<span class="diff-tag bg-slate-100 text-slate-400">0</span>`;
+            };
+
+            document.getElementById('diff-analysis').innerHTML = `
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black text-slate-400 uppercase">Red Channel</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800">${targetColor.r}</span>
+                            ${getDiffTag(r - targetColor.r)}
                         </div>
                     </div>
-                `;
-            }).join('');
-        }
-
-        function showResult(similarity, analysisHTML) {
-            isResultState = true;
-            [inputR, inputG, inputB, inputHex].forEach(el => el.disabled = true);
-            resultPanel.classList.remove('hidden');
-            similarityText.innerText = `유사도: ${similarity.toFixed(1)}%`;
-            if(similarity >= 96) { statusBadge.innerText = "PERFECT!"; statusBadge.className = "text-3xl font-black italic mb-1 text-emerald-500"; score += 15;
-            } else if(similarity >= 88) { statusBadge.innerText = "GREAT!"; statusBadge.className = "text-3xl font-black italic mb-1 text-blue-500"; score += 7;
-            } else { statusBadge.innerText = "GOOD!"; statusBadge.className = "text-3xl font-black italic mb-1 text-amber-500"; score += 3; }
-            scoreDisplay.innerText = score;
-            diffAnalysis.innerHTML = analysisHTML;
-            const targetHex = `#${targetColor.r.toString(16).padStart(2,'0')}${targetColor.g.toString(16).padStart(2,'0')}${targetColor.b.toString(16).padStart(2,'0')}`.toUpperCase();
-            correctAnswerInfo.innerText = `Answer: ${targetHex}`;
-            document.activeElement.blur();
-        }
-
-        function gameOver(similarity, analysisHTML) {
-            overlay.classList.remove('hidden');
-            document.getElementById('final-score-msg').innerText = `최종 점수: ${score}점`;
-            gameoverAnalysis.innerHTML = `
-                <p class="text-[10px] font-black text-slate-400 uppercase mb-3 text-center">정답과의 오차 분석</p>
-                <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100">
-                    ${analysisHTML}
-                </div>
-                <div class="mt-4 pt-4 border-t border-slate-100 text-center">
-                    <p class="text-2xl font-black text-red-500">${similarity.toFixed(1)}%</p>
-                    <p class="text-[10px] font-bold text-slate-400">75% 이상이어야 통과입니다.</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black text-slate-400 uppercase">Green Channel</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800">${targetColor.g}</span>
+                            ${getDiffTag(g - targetColor.g)}
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black text-slate-400 uppercase">Blue Channel</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800">${targetColor.b}</span>
+                            ${getDiffTag(b - targetColor.b)}
+                        </div>
+                    </div>
                 </div>
             `;
             document.activeElement.blur();
         }
 
-        function restartGame() {
-            score = 0;
-            scoreDisplay.innerText = "0";
-            overlay.classList.add('hidden');
-            generateNewColor();
+        async function submitScore() {
+            const name = document.getElementById('user-name').value.trim();
+            if(!name) return;
+            
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerText = "SAVING...";
+
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // CORS 정책 대응
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, score: score })
+                });
+                // no-cors 모드에서는 응답을 읽을 수 없으므로 성공으로 간주하고 이동
+                setTimeout(() => goHome(), 500);
+            } catch(e) {
+                console.error(e);
+                btn.disabled = false;
+                btn.innerText = "TRY AGAIN";
+            }
         }
+
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'Enter') {
+                if(!document.getElementById('game-view').classList.contains('hidden')) {
+                    if(isResultState) generateNewColor();
+                    else checkAnswer();
+                }
+            }
+        });
     </script>
 </body>
 </html>
