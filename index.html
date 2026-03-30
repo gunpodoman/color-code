@@ -3,187 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>절대색감 PRO</title>
+    <title>절대색감 - Professional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
         
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background: #1e225e;
+            overflow: hidden; background: #0f172a;
             font-family: 'Pretendard', sans-serif; touch-action: none;
+            -webkit-user-select: none; user-select: none;
         }
 
         #bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #1e225e 0%, #2e3192 100%);
+            background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%);
             z-index: -1;
         }
 
-        #viewport-root {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; z-index: 10;
-        }
-
-        .main-stage {
-            flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; gap: 20px;
-            padding: 10px 20px 40px;
-        }
-
         .main-card {
-            background: white; border-radius: 3.5rem; width: 100%; max-width: 420px;
-            padding: 40px 30px; position: relative; box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.3);
-            display: flex; flex-direction: column; align-items: center;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 2.5rem;
+            width: 100%; max-width: 400px;
+            padding: 32px;
+            position: relative; /* 결과창이 카드 내부를 덮도록 상대 위치 설정 */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        #target-color-box {
-            width: 100%; height: 140px; border-radius: 2.5rem;
-            margin: 15px 0; border: 10px solid #f8fafc; transition: background-color 0.3s ease;
+        #target-color-display {
+            width: 100%; height: 140px; border-radius: 2rem;
+            margin: 15px 0; border: 6px solid #f8fafc;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            transition: background-color 0.3s ease;
         }
 
-        /* 결과 패널 */
-        .status-text { font-size: 3rem; font-weight: 900; font-style: italic; color: #4f46e5; }
-        .similarity-text { font-size: 2.2rem; font-weight: 800; color: #1e293b; margin-bottom: 20px; }
-
-        /* 버튼 스타일 */
-        #mobile-action-btn {
-            width: 100%; max-width: 420px; padding: 22px 0;
-            border-radius: 2rem; color: white; font-weight: 800; font-size: 1.5rem;
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            box-shadow: 0 15px 30px rgba(79, 70, 229, 0.4);
-            transition: all 0.2s; cursor: pointer; text-transform: uppercase;
+        .mode-switch-container {
+            display: flex; background: #f1f5f9; border-radius: 1rem; padding: 4px;
+            margin-bottom: 16px;
         }
-        #mobile-action-btn:active { transform: scale(0.96); }
+        .mode-btn {
+            flex: 1; padding: 8px; border-radius: 0.8rem; font-size: 0.7rem; font-weight: 800;
+            transition: all 0.2s; color: #94a3b8;
+        }
+        .mode-btn.active { background: white; color: #4f46e5; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        input { outline: none !important; -webkit-appearance: none; }
-        input:focus { border-color: #6366f1 !important; background: #f5f3ff !important; }
+        input { 
+            outline: none !important; transition: all 0.2s ease;
+            background: #f8fafc; border: 2px solid #e2e8f0;
+        }
+        input:focus { border-color: #4f46e5; background: white; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+        }
+        .btn-primary:active { transform: scale(0.96); }
+        
         .hidden { display: none !important; }
-        .animate-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #ban-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            color: #ef4444; font-weight: 900; text-align: center;
+        }
     </style>
 </head>
 <body>
     <div id="bg-layer"></div>
-
-    <div id="viewport-root">
-        <div class="h-[60px] flex justify-between items-center px-6">
-            <div class="flex items-center gap-2 text-white font-black italic tracking-tighter text-xl cursor-pointer" onclick="location.reload()">COLOR MASTER</div>
-            <div class="bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-xl border border-white/20 text-white font-black" id="score-display">0</div>
-        </div>
-
-        <div class="main-stage">
-            <!-- 1. 초기 화면 -->
-            <div id="home-view" class="main-card animate-in">
-                <h2 class="text-2xl font-black text-slate-900 italic mb-6">RANKING</h2>
-                <div id="ranking-list" class="w-full space-y-2 mb-8 min-h-[200px]">
-                    <p class="text-center text-slate-300 py-20 font-bold">Loading...</p>
-                </div>
-                <button onclick="startGame()" class="w-full bg-slate-900 text-white py-5 rounded-[2rem] font-black text-xl">PRESS ENTER TO START</button>
-            </div>
-
-            <!-- 2. 게임/결과 화면 -->
-            <div id="game-view" class="main-card hidden animate-in">
-                <!-- 결과 패널 (직관적 게이지) -->
-                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[3.5rem] flex flex-col items-center justify-center p-6 z-30">
-                    <div id="status-badge" class="status-text">GOOD</div>
-                    <div id="similarity-text" class="similarity-text">86.3%</div>
-                    
-                    <!-- NEW 직관적 게이지 박스 -->
-                    <div class="w-full bg-slate-50 rounded-3xl p-5 flex flex-col gap-5 border border-slate-100">
-                        <!-- RED -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1.5">
-                                <span class="text-xs font-black text-rose-500 tracking-wider">RED</span>
-                                <div class="text-[11px] font-bold text-slate-500 flex items-center">
-                                    <span>Target <span id="r-target" class="text-slate-800 ml-0.5">0</span></span>
-                                    <span class="mx-2 text-slate-300">|</span>
-                                    <span>Yours <span id="r-user" class="text-rose-500 ml-0.5">0</span></span>
-                                    <span id="r-diff" class="ml-2 px-1.5 py-0.5 rounded text-[10px]">0</span>
-                                </div>
-                            </div>
-                            <div class="relative w-full h-3 bg-slate-200 rounded-full">
-                                <div id="r-bar" class="absolute top-0 left-0 h-full bg-rose-500 rounded-full" style="width: 0%; transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);"></div>
-                                <div id="r-marker" class="absolute top-0 w-1.5 h-full bg-slate-900 rounded-full transform -translate-x-1/2 z-10 border border-white" style="left: 0%; transition: left 0.6s ease;"></div>
-                            </div>
-                        </div>
-                        <!-- GREEN -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1.5">
-                                <span class="text-xs font-black text-emerald-500 tracking-wider">GREEN</span>
-                                <div class="text-[11px] font-bold text-slate-500 flex items-center">
-                                    <span>Target <span id="g-target" class="text-slate-800 ml-0.5">0</span></span>
-                                    <span class="mx-2 text-slate-300">|</span>
-                                    <span>Yours <span id="g-user" class="text-emerald-500 ml-0.5">0</span></span>
-                                    <span id="g-diff" class="ml-2 px-1.5 py-0.5 rounded text-[10px]">0</span>
-                                </div>
-                            </div>
-                            <div class="relative w-full h-3 bg-slate-200 rounded-full">
-                                <div id="g-bar" class="absolute top-0 left-0 h-full bg-emerald-500 rounded-full" style="width: 0%; transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);"></div>
-                                <div id="g-marker" class="absolute top-0 w-1.5 h-full bg-slate-900 rounded-full transform -translate-x-1/2 z-10 border border-white" style="left: 0%; transition: left 0.6s ease;"></div>
-                            </div>
-                        </div>
-                        <!-- BLUE -->
-                        <div>
-                            <div class="flex justify-between items-center mb-1.5">
-                                <span class="text-xs font-black text-blue-500 tracking-wider">BLUE</span>
-                                <div class="text-[11px] font-bold text-slate-500 flex items-center">
-                                    <span>Target <span id="b-target" class="text-slate-800 ml-0.5">0</span></span>
-                                    <span class="mx-2 text-slate-300">|</span>
-                                    <span>Yours <span id="b-user" class="text-blue-500 ml-0.5">0</span></span>
-                                    <span id="b-diff" class="ml-2 px-1.5 py-0.5 rounded text-[10px]">0</span>
-                                </div>
-                            </div>
-                            <div class="relative w-full h-3 bg-slate-200 rounded-full">
-                                <div id="b-bar" class="absolute top-0 left-0 h-full bg-blue-500 rounded-full" style="width: 0%; transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);"></div>
-                                <div id="b-marker" class="absolute top-0 w-1.5 h-full bg-slate-900 rounded-full transform -translate-x-1/2 z-10 border border-white" style="left: 0%; transition: left 0.6s ease;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <p class="text-[10px] font-black text-indigo-300 uppercase tracking-widest mt-6 animate-pulse">Press Enter to continue</p>
-                </div>
-
-                <div class="text-center mb-4">
-                    <p class="text-indigo-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Challenge</p>
-                    <h2 class="text-xl font-black text-slate-900">컬러를 맞춰보세요</h2>
-                </div>
-
-                <div id="target-color-box"></div>
-
-                <div class="w-full flex gap-3 mt-4">
-                    <input type="number" id="input-r" placeholder="R" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100" inputmode="numeric">
-                    <input type="number" id="input-g" placeholder="G" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100" inputmode="numeric">
-                    <input type="number" id="input-b" placeholder="B" class="w-full py-5 bg-slate-50 rounded-2xl text-center font-black text-2xl border-2 border-slate-100" inputmode="numeric">
-                </div>
-            </div>
-
-            <button id="mobile-action-btn" class="hidden" onclick="handleActionButton()">CHECK</button>
-        </div>
+    
+    <div id="ban-overlay">
+        <span class="text-6xl mb-4">🚫</span>
+        <h1 class="text-2xl mb-2 tracking-tighter">접근 제한됨</h1>
+        <p class="text-sm font-medium opacity-50 px-10">비정상적인 활동이 감지되어<br>이 기기의 접속이 차단되었습니다.</p>
+        <p id="device-info-display" class="mt-8 text-[10px] font-mono opacity-30"></p>
     </div>
 
-    <!-- 3. 종료 화면 -->
-    <div id="overlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[1000] flex items-center justify-center hidden p-6">
-        <div class="bg-white rounded-[3.5rem] p-10 max-w-sm w-full text-center">
-            <h2 class="text-4xl font-black text-slate-900 italic mb-2">FAIL</h2>
-            <p id="final-score-msg" class="text-indigo-600 font-black mb-8 text-2xl">0 PTS</p>
-            <div id="rank-register-area" class="mb-4 hidden">
-                <input type="text" id="user-name" maxlength="8" placeholder="NICKNAME" class="w-full py-4 bg-slate-50 rounded-2xl text-center font-black text-xl mb-3 border-2 border-slate-100">
-                <button onclick="submitScore()" id="submit-btn" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black mb-2">REGISTER</button>
+    <div id="viewport-root" class="fixed inset-0 flex flex-col items-center">
+        <!-- 상단 툴바 -->
+        <header class="w-full max-w-[400px] h-[70px] flex justify-between items-center px-6 mt-2">
+            <div class="flex items-center gap-3 text-white cursor-pointer" onclick="location.reload()">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <span class="font-black text-xl">🎨</span>
+                </div>
+                <span class="font-black text-xl tracking-tighter italic">절대색감</span>
             </div>
-            <button onclick="location.reload()" class="w-full bg-indigo-100 text-indigo-700 py-4 rounded-2xl font-black text-lg">RETRY</button>
-        </div>
+            <div class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-white shadow-xl">
+                <span id="score-display" class="font-black text-lg">0</span><span class="ml-1 text-[10px] opacity-60">PTS</span>
+            </div>
+        </header>
+
+        <main class="flex-1 flex flex-col items-center justify-center w-full p-4">
+            <!-- 메인 홈 -->
+            <div id="home-view" class="main-card">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-black text-slate-900 tracking-tight">RANKING</h2>
+                    <p class="text-slate-400 text-sm font-bold uppercase tracking-widest">Global Top 10</p>
+                </div>
+
+                <div id="ranking-list" class="min-h-[260px] max-h-[300px] overflow-y-auto space-y-3 mb-8 pr-1">
+                    <div class="flex flex-col items-center justify-center py-20 text-slate-300 gap-3">
+                        <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-[10px] font-black tracking-widest">보안 연결 중...</span>
+                    </div>
+                </div>
+
+                <button id="start-btn" onclick="startGame()" disabled class="w-full btn-primary text-white py-5 rounded-3xl font-black text-xl opacity-50 cursor-not-allowed transition-all">
+                    접속 대기 중
+                </button>
+            </div>
+
+            <!-- 게임 화면 -->
+            <div id="game-view" class="main-card hidden">
+                <!-- 모드 스위처 (게임 중 변경 가능) -->
+                <div class="mode-switch-container">
+                    <button id="mode-rgb-btn" onclick="setMode('RGB')" class="mode-btn active">RGB MODE</button>
+                    <button id="mode-hex-btn" onclick="setMode('HEX')" class="mode-btn">HEX MODE</button>
+                </div>
+
+                <div id="target-color-display"></div>
+                
+                <!-- 통합된 결과창 및 게임오버 UI -->
+                <div id="result-panel" class="hidden absolute inset-0 bg-white rounded-[2.5rem] flex flex-col items-center justify-center p-6 z-30">
+                    <div id="status-badge" class="text-4xl font-black italic mb-1 text-indigo-600 tracking-tighter">GREAT!</div>
+                    <div id="similarity-text" class="text-slate-900 font-black text-4xl mb-2">0%</div>
+                    
+                    <!-- 게임 오버 시에만 보이는 최종 점수 -->
+                    <div id="game-over-score" class="hidden text-indigo-600 font-black mb-4 text-2xl">0 PTS</div>
+
+                    <div id="diff-analysis" class="w-full space-y-2 mb-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 font-bold text-xs text-slate-500"></div>
+                    
+                    <!-- 정답 맞췄을 때 진행 안내 -->
+                    <p id="continue-hint" class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em] animate-pulse mb-2">Tap to Continue</p>
+                    
+                    <!-- 게임 오버 시에만 나타나는 액션 영역 -->
+                    <div id="game-over-actions" class="hidden w-full flex-col gap-2">
+                        <div id="rank-register-area" class="w-full hidden flex-col gap-2">
+                            <input type="text" id="user-name" maxlength="10" placeholder="NICKNAME" class="w-full py-3 bg-slate-50 rounded-xl text-center font-black text-lg border-2 border-slate-200">
+                            <button onclick="submitScore()" id="submit-btn" class="w-full bg-slate-950 text-white py-3 rounded-xl font-black text-lg shadow-lg">랭킹 등록하기</button>
+                        </div>
+                        <div id="low-score-msg" class="w-full hidden">
+                            <button onclick="startGame()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-black text-lg shadow-lg">다시 도전</button>
+                        </div>
+                        <button onclick="location.reload()" class="text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:text-slate-600 transition-colors mt-2 p-2">메인으로 돌아가기</button>
+                    </div>
+                </div>
+
+                <div id="input-container" class="mt-4">
+                    <div id="input-area-rgb" class="grid grid-cols-3 gap-2">
+                        <input type="number" id="input-r" placeholder="R" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, 'input-g')">
+                        <input type="number" id="input-g" placeholder="G" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, 'input-b')">
+                        <input type="number" id="input-b" placeholder="B" class="w-full py-5 rounded-2xl text-center font-black text-2xl" oninput="handleRgbInput(this, null)">
+                    </div>
+                    <div id="input-area-hex" class="hidden relative">
+                        <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-black text-2xl">#</span>
+                        <input type="text" id="input-hex" maxlength="6" placeholder="HEX CODE" class="w-full py-5 pl-14 rounded-2xl font-black text-2xl tracking-widest uppercase">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 액션 버튼 (오답 시 숨김 처리됨) -->
+            <button id="mobile-action-btn" class="hidden w-full max-w-[400px] py-5 mt-6 rounded-3xl text-white font-black text-xl btn-primary shadow-2xl" onclick="handleActionButton()">
+                정답 확인
+            </button>
+        </main>
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbykOuF-DPpiMJwEPpic-4RYQk2OAAyMETIP90cnBdZ81QrtbJPceUCV0OwCgwX8RSc7og/exec";
-        let targetColor = { r: 0, g: 0, b: 0 };
+        
+        let targetColor = { r: 0, g: 0, b: 0, hex: "" };
+        let currentMode = "RGB";
         let score = 0;
-        let gameState = "HOME"; // HOME, PLAY, RESULT, OVER
-        let deviceId = "ID-" + Math.random().toString(36).substr(2, 9).toUpperCase();
+        let isResultState = false;
+        let isFailed = false;
+        let lastColorTime = 0;
+        let inputLogs = [];
+        let isCheater = false;
+
+        function generateSecureId() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = "top"; ctx.font = "14px Arial";
+            ctx.fillText(navigator.userAgent + screen.width, 2, 15);
+            const str = canvas.toDataURL();
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            return "DVC-" + Math.abs(hash).toString(36).toUpperCase();
+        }
+        const deviceId = generateSecureId();
+
+        async function checkSecurity() {
+            try {
+                const res = await fetch(`${API_URL}?action=checkBan&deviceId=${deviceId}`);
+                const data = await res.json();
+                if(data.banned) {
+                    document.getElementById('ban-overlay').style.display = 'flex';
+                    document.getElementById('device-info-display').innerText = `DEVICE ID: ${deviceId}`;
+                    return false;
+                }
+                const startBtn = document.getElementById('start-btn');
+                startBtn.disabled = false;
+                startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                startBtn.innerText = "테스트 시작";
+                return true;
+            } catch(e) {
+                document.getElementById('start-btn').disabled = false;
+                document.getElementById('start-btn').innerText = "시작 (서버 오프라인)";
+                return true;
+            }
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('mode-rgb-btn').classList.toggle('active', mode === 'RGB');
+            document.getElementById('mode-hex-btn').classList.toggle('active', mode === 'HEX');
+            document.getElementById('input-area-rgb').classList.toggle('hidden', mode === 'HEX');
+            document.getElementById('input-area-hex').classList.toggle('hidden', mode === 'RGB');
+            
+            if(!isResultState) {
+                if(mode === 'RGB') document.getElementById('input-r').focus();
+                else document.getElementById('input-hex').focus();
+            }
+        }
 
         function startGame() {
-            gameState = "PLAY";
             score = 0;
             document.getElementById('score-display').innerText = "0";
             document.getElementById('home-view').classList.add('hidden');
@@ -193,149 +240,223 @@
         }
 
         function generateNewColor() {
-            gameState = "PLAY";
-            targetColor = { r: Math.floor(Math.random()*256), g: Math.floor(Math.random()*256), b: Math.floor(Math.random()*256) };
-            document.getElementById('target-color-box').style.backgroundColor = `rgb(${targetColor.r},${targetColor.g},${targetColor.b})`;
+            isResultState = false;
+            isFailed = false;
+            inputLogs = [];
+            isCheater = false;
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            targetColor = { r, g, b, hex: rgbToHex(r, g, b) };
+            
+            document.getElementById('target-color-display').style.backgroundColor = targetColor.hex;
             document.getElementById('result-panel').classList.add('hidden');
-            document.getElementById('mobile-action-btn').innerText = "CHECK";
-            ['input-r', 'input-g', 'input-b'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('input-r').focus();
+            
+            const actionBtn = document.getElementById('mobile-action-btn');
+            actionBtn.innerText = "정답 확인";
+            actionBtn.classList.remove('hidden');
+            
+            ['input-r', 'input-g', 'input-b', 'input-hex'].forEach(id => document.getElementById(id).value = '');
+            setTimeout(() => {
+                if(currentMode === 'RGB') document.getElementById('input-r').focus();
+                else document.getElementById('input-hex').focus();
+            }, 100);
+            
+            lastColorTime = Date.now();
         }
 
+        function handleRgbInput(el, nextId) {
+            inputLogs.push({ t: Date.now(), v: el.value });
+            if(el.value.length >= 3) {
+                if(parseInt(el.value) > 255) el.value = "255";
+                if(nextId) document.getElementById(nextId).focus();
+            }
+        }
+
+        document.getElementById('input-hex').addEventListener('input', (e) => {
+            inputLogs.push({ t: Date.now(), v: e.target.value });
+        });
+
         function handleActionButton() {
-            if(gameState === "RESULT") generateNewColor();
-            else if(gameState === "PLAY") checkAnswer();
+            if(isResultState) {
+                if(!isFailed) generateNewColor();
+            }
+            else checkAnswer();
         }
 
         function checkAnswer() {
-            const r = parseInt(document.getElementById('input-r').value) || 0;
-            const g = parseInt(document.getElementById('input-g').value) || 0;
-            const b = parseInt(document.getElementById('input-b').value) || 0;
-
-            const dist = Math.sqrt(Math.pow(targetColor.r-r,2) + Math.pow(targetColor.g-g,2) + Math.pow(targetColor.b-b,2));
-            const similarity = Math.max(0, 100 - (dist / 441.67 * 100));
-
-            if(similarity < 65) gameOver();
-            else showResult(similarity, r, g, b);
-        }
-
-        function updateSmartGauge(channel, targetVal, userVal) {
-            document.getElementById(`${channel}-target`).innerText = targetVal;
-            document.getElementById(`${channel}-user`).innerText = userVal;
+            const now = Date.now();
+            const timeDiff = now - lastColorTime;
             
-            const diff = userVal - targetVal;
-            const diffEl = document.getElementById(`${channel}-diff`);
-            diffEl.innerText = diff > 0 ? `+${diff}` : diff;
-            
-            // 오차 태그 색상 (초과: 빨간색 계열, 부족: 파란색 계열, 일치: 초록색)
-            if (diff > 0) {
-                diffEl.className = "ml-2 px-1.5 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-600";
-            } else if (diff < 0) {
-                diffEl.className = "ml-2 px-1.5 py-0.5 rounded text-[10px] font-black bg-indigo-100 text-indigo-600";
-            } else {
-                diffEl.className = "ml-2 px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-600";
+            if(timeDiff < 600) isCheater = true;
+            if(inputLogs.length >= 4) {
+                const intervals = [];
+                for(let i=1; i<inputLogs.length; i++) intervals.push(inputLogs[i].t - inputLogs[i-1].t);
+                const avg = intervals.reduce((a,b)=>a+b)/intervals.length;
+                const variance = intervals.reduce((a,b)=>a+Math.pow(b-avg,2),0)/intervals.length;
+                if(variance < 10) isCheater = true;
             }
 
-            // 게이지 바 채우기 (0~255 기준 비율)
-            const barWidth = Math.min(Math.max((userVal / 255) * 100, 0), 100);
-            document.getElementById(`${channel}-bar`).style.width = `${barWidth}%`;
-            
-            // 타겟 마커 위치
-            const markerPos = (targetVal / 255) * 100;
-            document.getElementById(`${channel}-marker`).style.left = `${markerPos}%`;
+            let userRgb;
+            if(currentMode === 'RGB') {
+                userRgb = {
+                    r: parseInt(document.getElementById('input-r').value) || 0,
+                    g: parseInt(document.getElementById('input-g').value) || 0,
+                    b: parseInt(document.getElementById('input-b').value) || 0
+                };
+            } else {
+                userRgb = hexToRgb(document.getElementById('input-hex').value);
+            }
+
+            const dist = Math.sqrt(Math.pow(targetColor.r-userRgb.r,2)+Math.pow(targetColor.g-userRgb.g,2)+Math.pow(targetColor.b-userRgb.b,2));
+            const similarity = Math.max(0, 100 - (dist / 441.67 * 100));
+
+            showResult(similarity, userRgb, similarity < 85);
         }
 
-        function showResult(sim, r, g, b) {
-            gameState = "RESULT";
+        function createGaugeHTML(label, target, user, bgClass) {
+            const diff = user - target;
+            const diffText = diff > 0 ? `+${diff}` : diff;
+            const textClass = diff > 0 ? 'text-rose-500' : (diff < 0 ? 'text-blue-500' : 'text-slate-400');
+            const targetPct = (target / 255) * 100;
+            const userPct = (user / 255) * 100;
+            return `
+                <div class="mb-2 last:mb-0">
+                    <div class="flex justify-between text-xs font-black mb-1.5">
+                        <span class="text-slate-500">${label}</span>
+                        <span class="${textClass}">${diffText}</span>
+                    </div>
+                    <div class="relative w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                        <div class="absolute top-0 left-0 h-full ${bgClass} rounded-full transition-all duration-500" style="width: ${userPct}%;"></div>
+                        <div class="absolute top-0 w-1.5 h-full bg-slate-800 transform -translate-x-1/2 border border-white" style="left: ${targetPct}%;"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showResult(sim, userRgb, failed) {
+            isResultState = true;
+            isFailed = failed;
             const panel = document.getElementById('result-panel');
             panel.classList.remove('hidden');
-            document.getElementById('mobile-action-btn').innerText = "CONTINUE";
-            
             document.getElementById('similarity-text').innerText = `${sim.toFixed(1)}%`;
             
-            // 직관적인 스마트 게이지 업데이트
-            updateSmartGauge('r', targetColor.r, r);
-            updateSmartGauge('g', targetColor.g, g);
-            updateSmartGauge('b', targetColor.b, b);
+            document.getElementById('diff-analysis').innerHTML = `
+                <div class="flex justify-between items-center text-[10px] font-black text-slate-400 mb-3 uppercase tracking-widest border-b border-slate-200 pb-2">
+                    <span>Target <span class="text-slate-800 ml-1">R${targetColor.r} G${targetColor.g} B${targetColor.b}</span></span>
+                    <span>Yours <span class="text-indigo-600 ml-1">R${userRgb.r} G${userRgb.g} B${userRgb.b}</span></span>
+                </div>
+                ${createGaugeHTML('RED', targetColor.r, userRgb.r, 'bg-rose-500')}
+                ${createGaugeHTML('GREEN', targetColor.g, userRgb.g, 'bg-emerald-500')}
+                ${createGaugeHTML('BLUE', targetColor.b, userRgb.b, 'bg-blue-500')}
+            `;
 
             const badge = document.getElementById('status-badge');
-            if(sim >= 95) { badge.innerText = "PERFECT"; badge.style.color = "#10b981"; score += 20; }
-            else if(sim >= 85) { badge.innerText = "GREAT"; badge.style.color = "#6366f1"; score += 10; }
-            else { badge.innerText = "GOOD"; badge.style.color = "#3b82f6"; score += 5; }
+            const actionBtn = document.getElementById('mobile-action-btn');
+            const gameOverActions = document.getElementById('game-over-actions');
+            const continueHint = document.getElementById('continue-hint');
+            const gameOverScore = document.getElementById('game-over-score');
+
+            if(isFailed) {
+                // 게임 오버 상태 UI 처리 (창 내부)
+                badge.innerText = "GAME OVER"; 
+                badge.className = "text-4xl font-black italic mb-1 text-rose-500 tracking-tighter";
+                
+                actionBtn.classList.add('hidden'); // 하단 공통 버튼 숨김
+                continueHint.classList.add('hidden'); // 계속하기 텍스트 숨김
+                
+                gameOverScore.innerText = `최종 기록: ${score} PTS`;
+                gameOverScore.classList.remove('hidden'); // 최종 점수 노출
+                
+                gameOverActions.classList.remove('hidden');
+                gameOverActions.classList.add('flex'); // 게임오버 메뉴(등록/재도전) 노출
+                
+                const reg = document.getElementById('rank-register-area');
+                const low = document.getElementById('low-score-msg');
+                
+                if(score > 0) { 
+                    reg.classList.remove('hidden'); reg.classList.add('flex');
+                    low.classList.add('hidden'); 
+                    setTimeout(() => document.getElementById('user-name').focus(), 100);
+                } else { 
+                    reg.classList.add('hidden'); reg.classList.remove('flex');
+                    low.classList.remove('hidden'); 
+                }
+            } else {
+                // 정답 맞췄을 때 상태 처리
+                gameOverScore.classList.add('hidden');
+                gameOverActions.classList.add('hidden');
+                gameOverActions.classList.remove('flex');
+                
+                continueHint.classList.remove('hidden');
+                actionBtn.classList.remove('hidden');
+                actionBtn.innerText = "다음 문제";
+                
+                if(sim >= 98) { badge.innerText = "PERFECT"; badge.className = "text-4xl font-black italic mb-1 text-emerald-500 tracking-tighter"; score += 20; }
+                else if(sim >= 94) { badge.innerText = "GREAT"; badge.className = "text-4xl font-black italic mb-1 text-indigo-500 tracking-tighter"; score += 10; }
+                else { badge.innerText = "GOOD"; badge.className = "text-4xl font-black italic mb-1 text-blue-500 tracking-tighter"; score += 5; }
+            }
             
             document.getElementById('score-display').innerText = score;
             document.activeElement.blur();
-        }
-
-        function gameOver() {
-            gameState = "OVER";
-            document.getElementById('overlay').classList.remove('hidden');
-            document.getElementById('final-score-msg').innerText = `${score} PTS`;
-            
-            if(score > 0) {
-                document.getElementById('rank-register-area').classList.remove('hidden');
-                // 스마트 포커스: 점수가 있으면 자동으로 닉네임 입력창에 포커스 (Enter 입력 준비)
-                setTimeout(() => document.getElementById('user-name').focus(), 100);
-            }
-        }
-
-        // 스마트 엔터 키 핸들러 통합
-        window.addEventListener('keydown', (e) => {
-            if(e.key === 'Enter') {
-                switch(gameState) {
-                    case "HOME": startGame(); break;
-                    case "PLAY": checkAnswer(); break;
-                    case "RESULT": generateNewColor(); break;
-                    case "OVER": 
-                        const rankArea = document.getElementById('rank-register-area');
-                        const nameInput = document.getElementById('user-name');
-                        
-                        // 랭킹 구역이 보이고, 이름이 비어있지 않은 상태에서 포커스 되어있다면 등록
-                        if(!rankArea.classList.contains('hidden') && document.activeElement === nameInput && nameInput.value.trim() !== "") {
-                            submitScore();
-                        } else {
-                            // 그 외의 경우 (점수가 0점이거나 이미 등록을 마쳤을 때) 재시작
-                            location.reload(); 
-                        }
-                        break;
-                }
-            }
-        });
-
-        async function fetchRankings() {
-            const list = document.getElementById('ranking-list');
-            try {
-                const res = await fetch(API_URL);
-                const data = await res.json();
-                list.innerHTML = data.slice(0, 5).map((r, i) => `
-                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                        <span class="font-black text-slate-800"><span class="text-indigo-500 mr-2">#${i+1}</span> ${r.name}</span>
-                        <span class="font-black text-slate-400 text-sm">${r.score}</span>
-                    </div>
-                `).join('');
-            } catch(e) { list.innerHTML = '<p class="text-center text-slate-300 py-10 font-bold">Offline</p>'; }
         }
 
         async function submitScore() {
             const name = document.getElementById('user-name').value.trim();
             if(!name) return;
             const btn = document.getElementById('submit-btn');
-            btn.innerText = "SAVING...";
-            btn.disabled = true;
+            btn.disabled = true; btn.innerText = "기록 중...";
             try {
-                await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ name, score, device: deviceId }) });
-                // 완료 후 재시작 버튼으로 유도
-                document.getElementById('rank-register-area').classList.add('hidden');
-                document.getElementById('final-score-msg').innerText = "REGISTERED!";
-                // 포커스 해제하여 다음 Enter 시 자연스럽게 RETRY 발동하도록 함
-                document.activeElement.blur(); 
-            } catch(e) { 
-                btn.innerText = "REGISTER"; 
-                btn.disabled = false;
-            }
+                await fetch(API_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ name, score, device: deviceId, is_cheater: isCheater }) 
+                });
+                location.reload();
+            } catch(e) { btn.disabled = false; btn.innerText = "다시 시도"; }
         }
 
-        window.onload = fetchRankings;
+        async function fetchRankings() {
+            try {
+                const res = await fetch(API_URL);
+                const data = await res.json();
+                const listDiv = document.getElementById('ranking-list');
+                listDiv.innerHTML = data.map((r, i) => `
+                    <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <span class="font-bold text-slate-800"><span class="text-indigo-500 mr-2">${i+1}</span> ${r.name}</span>
+                        <span class="font-black text-slate-400 text-sm">${r.score} PTS</span>
+                    </div>
+                `).join('') || '<p class="text-center text-slate-300 py-10 font-bold text-xs uppercase">No Records</p>';
+            } catch(e) {}
+        }
+
+        function rgbToHex(r, g, b) { return "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase(); }
+        function hexToRgb(hex) {
+            hex = hex.replace('#', '');
+            if(hex.length === 3) hex = hex.split('').map(s => s + s).join('');
+            const bigint = parseInt(hex, 16) || 0;
+            return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+        }
+
+        window.onload = async () => {
+            const isSafe = await checkSecurity();
+            if(isSafe) fetchRankings();
+        };
+
+        window.addEventListener('keydown', (e) => { 
+            if(e.key === 'Enter') {
+                if (isResultState && isFailed) {
+                    const nameInput = document.getElementById('user-name');
+                    if(document.activeElement === nameInput && nameInput.value.trim() !== '') {
+                        submitScore();
+                    } else if (score === 0) {
+                        startGame();
+                    }
+                } else {
+                    handleActionButton(); 
+                }
+            } 
+        });
     </script>
 </body>
 </html>
